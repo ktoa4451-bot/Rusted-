@@ -1,11 +1,13 @@
---// 🌙 RUSTED ESP
---// Lunar Visual Menu
+--// RUSTED VISUAL HUB
+--// Part 1/2
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Camera = workspace.CurrentCamera
 
 --==================================================
 -- SETTINGS
@@ -13,438 +15,787 @@ local LocalPlayer = Players.LocalPlayer
 
 local Settings = {
     ESP = true,
-    BoxESP = true,
-    NameESP = true,
-    DistanceESP = true,
-    Tracer = true
+    Box = true,
+    Name = false,
+    Distance = false,
+    Health = false,
+    Tracer = false,
 }
 
 --==================================================
 -- GUI
 --==================================================
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RustedLunar"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = game:GetService("CoreGui")
+local OldGui = PlayerGui:FindFirstChild("RustedVisualHub")
+if OldGui then
+    OldGui:Destroy()
+end
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "RustedVisualHub"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.DisplayOrder = 100
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = PlayerGui
+
+--==================================================
+-- HELPERS
+--==================================================
+
+local function Corner(object, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 8)
+    c.Parent = object
+    return c
+end
+
+local function Stroke(object, thickness, transparency)
+    local s = Instance.new("UIStroke")
+    s.Thickness = thickness or 1
+    s.Transparency = transparency or 0
+    s.Color = Color3.fromRGB(115, 75, 210)
+    s.Parent = object
+    return s
+end
+
+local function Text(parent, text, size, color)
+    local t = Instance.new("TextLabel")
+    t.BackgroundTransparency = 1
+    t.Text = text
+    t.TextSize = size or 14
+    t.Font = Enum.Font.Gotham
+    t.TextColor3 = color or Color3.new(1,1,1)
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.Parent = parent
+    return t
+end
+
+--==================================================
+-- RESPONSIVE SIZE
+--==================================================
+
+local function UpdateSize()
+    local viewport = Camera.ViewportSize
+    local w = viewport.X
+    local h = viewport.Y
+
+    local menuW
+    local menuH
+
+    if w < 500 then
+        -- Phone
+        menuW = math.floor(w * 0.88)
+        menuH = math.floor(h * 0.72)
+    elseif w < 900 then
+        -- Small tablet
+        menuW = math.floor(w * 0.72)
+        menuH = math.floor(h * 0.70)
+    else
+        -- PC / large tablet
+        menuW = math.min(680, math.floor(w * 0.55))
+        menuH = math.min(520, math.floor(h * 0.70))
+    end
+
+    menuW = math.max(menuW, 300)
+    menuH = math.max(menuH, 300)
+
+    Main.Size = UDim2.fromOffset(menuW, menuH)
+    Main.Position = UDim2.new(0.5, -menuW / 2, 0.5, -menuH / 2)
+
+    Sidebar.Size = UDim2.new(0, math.clamp(menuW * 0.23, 82, 155), 1, -58)
+
+    Content.Position = UDim2.new(
+        0,
+        Sidebar.AbsoluteSize.X,
+        0,
+        58
+    )
+
+    Content.Size = UDim2.new(
+        1,
+        -Sidebar.AbsoluteSize.X,
+        1,
+        -58
+    )
+end
+
+--==================================================
+-- MAIN
+--==================================================
 
 local Main = Instance.new("Frame")
-Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 520, 0, 430)
-Main.Position = UDim2.new(0.5, -260, 0.5, -215)
-Main.BackgroundColor3 = Color3.fromRGB(11, 9, 22)
+Main.Name = "Main"
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(17, 14, 28)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
+Main.Parent = Gui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 20)
-Corner.Parent = Main
-
-local Border = Instance.new("UIStroke")
-Border.Color = Color3.fromRGB(155, 105, 235)
-Border.Transparency = 0.2
-Border.Thickness = 1.5
-Border.Parent = Main
+Corner(Main, 18)
+Stroke(Main, 2, 0.05)
 
 --==================================================
 -- TOP BAR
 --==================================================
 
-local Top = Instance.new("Frame")
-Top.Parent = Main
-Top.Position = UDim2.new(0, 2, 0, 2)
-Top.Size = UDim2.new(1, -4, 0, 62)
-Top.BackgroundColor3 = Color3.fromRGB(20, 16, 38)
-Top.BorderSizePixel = 0
+local TopBar = Instance.new("Frame")
+TopBar.BackgroundColor3 = Color3.fromRGB(23, 19, 38)
+TopBar.BorderSizePixel = 0
+TopBar.Size = UDim2.new(1, 0, 0, 58)
+TopBar.Parent = Main
 
-local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 17)
-TopCorner.Parent = Top
+local Logo = Text(
+    TopBar,
+    "◈",
+    25,
+    Color3.fromRGB(170, 110, 255)
+)
+Logo.Position = UDim2.new(0, 15, 0, 15)
+Logo.Size = UDim2.fromOffset(30, 30)
+Logo.TextXAlignment = Enum.TextXAlignment.Center
 
-local Logo = Instance.new("TextLabel")
-Logo.Parent = Top
-Logo.BackgroundTransparency = 1
-Logo.Position = UDim2.new(0, 16, 0, 8)
-Logo.Size = UDim2.new(0, 42, 0, 42)
-Logo.Text = "🌙"
-Logo.TextSize = 27
-Logo.Font = Enum.Font.GothamBold
-
-local Title = Instance.new("TextLabel")
-Title.Parent = Top
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 62, 0, 8)
-Title.Size = UDim2.new(0, 180, 0, 27)
-Title.Text = "LUNAR RUSTED"
-Title.TextColor3 = Color3.fromRGB(245, 240, 255)
-Title.TextSize = 18
+local Title = Text(
+    TopBar,
+    "RUSTED",
+    17,
+    Color3.fromRGB(240, 235, 255)
+)
+Title.Position = UDim2.new(0, 48, 0, 9)
+Title.Size = UDim2.new(0, 150, 0, 22)
 Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
 
-local Version = Instance.new("TextLabel")
-Version.Parent = Top
-Version.BackgroundTransparency = 1
-Version.Position = UDim2.new(0, 63, 0, 34)
-Version.Size = UDim2.new(0, 100, 0, 18)
-Version.Text = "v1.0 • Visual"
-Version.TextColor3 = Color3.fromRGB(160, 150, 185)
-Version.TextSize = 11
-Version.Font = Enum.Font.Gotham
-Version.TextXAlignment = Enum.TextXAlignment.Left
-
---==================================================
--- CLOSE
---==================================================
+local Version = Text(
+    TopBar,
+    "VISUAL",
+    10,
+    Color3.fromRGB(145, 120, 180)
+)
+Version.Position = UDim2.new(0, 49, 0, 31)
+Version.Size = UDim2.new(0, 100, 0, 16)
 
 local Close = Instance.new("TextButton")
-Close.Parent = Top
 Close.BackgroundTransparency = 1
-Close.Position = UDim2.new(1, -43, 0, 14)
-Close.Size = UDim2.new(0, 30, 0, 30)
 Close.Text = "×"
-Close.TextColor3 = Color3.fromRGB(245, 240, 255)
 Close.TextSize = 25
 Close.Font = Enum.Font.GothamBold
+Close.TextColor3 = Color3.fromRGB(220, 210, 235)
+Close.Size = UDim2.fromOffset(42, 42)
+Close.Position = UDim2.new(1, -45, 0, 8)
+Close.Parent = TopBar
+
+local Minimize = Instance.new("TextButton")
+Minimize.BackgroundTransparency = 1
+Minimize.Text = "−"
+Minimize.TextSize = 23
+Minimize.Font = Enum.Font.GothamBold
+Minimize.TextColor3 = Color3.fromRGB(220, 210, 235)
+Minimize.Size = UDim2.fromOffset(42, 42)
+Minimize.Position = UDim2.new(1, -88, 0, 8)
+Minimize.Parent = TopBar
 
 --==================================================
 -- SIDEBAR
 --==================================================
 
 local Sidebar = Instance.new("Frame")
-Sidebar.Parent = Main
-Sidebar.Position = UDim2.new(0, 2, 0, 64)
-Sidebar.Size = UDim2.new(0, 145, 1, -66)
-Sidebar.BackgroundColor3 = Color3.fromRGB(15, 12, 29)
+Sidebar.Name = "Sidebar"
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 16, 33)
 Sidebar.BorderSizePixel = 0
+Sidebar.Position = UDim2.new(0, 0, 0, 58)
+Sidebar.Parent = Main
 
-local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 17)
-SideCorner.Parent = Sidebar
+local SidebarLayout = Instance.new("UIListLayout")
+SidebarLayout.Padding = UDim.new(0, 8)
+SidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarLayout.Parent = Sidebar
+
+local SidePadding = Instance.new("UIPadding")
+SidePadding.PaddingTop = UDim.new(0, 14)
+SidePadding.PaddingLeft = UDim.new(0, 7)
+SidePadding.PaddingRight = UDim.new(0, 7)
+SidePadding.Parent = Sidebar
 
 local VisualButton = Instance.new("TextButton")
-VisualButton.Parent = Sidebar
-VisualButton.Position = UDim2.new(0, 10, 0, 18)
-VisualButton.Size = UDim2.new(1, -20, 0, 45)
-VisualButton.BackgroundColor3 = Color3.fromRGB(27, 21, 48)
+VisualButton.Name = "VisualButton"
+VisualButton.LayoutOrder = 1
+VisualButton.Size = UDim2.new(1, 0, 0, 43)
+VisualButton.BackgroundColor3 = Color3.fromRGB(86, 55, 145)
 VisualButton.BorderSizePixel = 0
 VisualButton.Text = "👁  Visual"
-VisualButton.TextColor3 = Color3.fromRGB(245, 240, 255)
-VisualButton.TextSize = 14
+VisualButton.TextSize = 13
 VisualButton.Font = Enum.Font.GothamBold
-VisualButton.TextXAlignment = Enum.TextXAlignment.Left
+VisualButton.TextColor3 = Color3.fromRGB(255,255,255)
+VisualButton.Parent = Sidebar
 
-local VisualCorner = Instance.new("UICorner")
-VisualCorner.CornerRadius = UDim.new(0, 12)
-VisualCorner.Parent = VisualButton
+Corner(VisualButton, 9)
+
+local UpdatesButton = Instance.new("TextButton")
+UpdatesButton.Name = "UpdatesButton"
+UpdatesButton.LayoutOrder = 2
+UpdatesButton.Size = UDim2.new(1, 0, 0, 43)
+UpdatesButton.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+UpdatesButton.BorderSizePixel = 0
+UpdatesButton.Text = "🔄  Updates"
+UpdatesButton.TextSize = 13
+UpdatesButton.Font = Enum.Font.Gotham
+UpdatesButton.TextColor3 = Color3.fromRGB(190,180,205)
+UpdatesButton.Parent = Sidebar
+
+Corner(UpdatesButton, 9)
 
 --==================================================
 -- CONTENT
 --==================================================
 
 local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.BackgroundTransparency = 1
 Content.Parent = Main
-Content.Position = UDim2.new(0, 157, 0, 64)
-Content.Size = UDim2.new(1, -159, 1, -66)
-Content.BackgroundColor3 = Color3.fromRGB(16, 13, 30)
-Content.BorderSizePixel = 0
 
-local ContentCorner = Instance.new("UICorner")
-ContentCorner.CornerRadius = UDim.new(0, 17)
-ContentCorner.Parent = Content
+local VisualPage = Instance.new("ScrollingFrame")
+VisualPage.Name = "VisualPage"
+VisualPage.BackgroundTransparency = 1
+VisualPage.BorderSizePixel = 0
+VisualPage.ScrollBarThickness = 3
+VisualPage.ScrollBarImageColor3 = Color3.fromRGB(105,70,170)
+VisualPage.CanvasSize = UDim2.new(0,0,0,0)
+VisualPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+VisualPage.Parent = Content
 
-local Header = Instance.new("TextLabel")
-Header.Parent = Content
-Header.BackgroundTransparency = 1
-Header.Position = UDim2.new(0, 20, 0, 18)
-Header.Size = UDim2.new(1, -40, 0, 30)
-Header.Text = "👁  Visual"
-Header.TextColor3 = Color3.fromRGB(245, 240, 255)
-Header.TextSize = 21
+local VisualPadding = Instance.new("UIPadding")
+VisualPadding.PaddingTop = UDim.new(0, 15)
+VisualPadding.PaddingBottom = UDim.new(0, 15)
+VisualPadding.PaddingLeft = UDim.new(0, 15)
+VisualPadding.PaddingRight = UDim.new(0, 15)
+VisualPadding.Parent = VisualPage
+
+local VisualLayout = Instance.new("UIListLayout")
+VisualLayout.Padding = UDim.new(0, 8)
+VisualLayout.SortOrder = Enum.SortOrder.LayoutOrder
+VisualLayout.Parent = VisualPage
+
+local Header = Text(
+    VisualPage,
+    "Visual Settings",
+    19,
+    Color3.fromRGB(240,235,255)
+)
+Header.Size = UDim2.new(1,0,0,30)
 Header.Font = Enum.Font.GothamBold
-Header.TextXAlignment = Enum.TextXAlignment.Left
+Header.LayoutOrder = 1
+
+local Description = Text(
+    VisualPage,
+    "Configure player ESP",
+    12,
+    Color3.fromRGB(145,135,160)
+)
+Description.Size = UDim2.new(1,0,0,24)
+Description.LayoutOrder = 2
 
 --==================================================
--- TOGGLE FUNCTION
+-- TOGGLE CREATOR
 --==================================================
 
-local function CreateToggle(text, y, setting)
+local Toggles = {}
 
+local function CreateToggle(name, description, key, order)
     local Button = Instance.new("TextButton")
-    Button.Parent = Content
-
-    Button.Position = UDim2.new(
-        0,
-        18,
-        0,
-        y
-    )
-
-    Button.Size = UDim2.new(
-        1,
-        -36,
-        0,
-        48
-    )
-
-    Button.BackgroundColor3 =
-        Color3.fromRGB(24, 20, 43)
-
+    Button.Name = key
+    Button.LayoutOrder = order
+    Button.Size = UDim2.new(1,0,0,58)
+    Button.BackgroundColor3 = Color3.fromRGB(27,23,41)
     Button.BorderSizePixel = 0
-
     Button.Text = ""
     Button.AutoButtonColor = false
+    Button.Parent = VisualPage
 
-    local C = Instance.new("UICorner")
-    C.CornerRadius = UDim.new(0, 12)
-    C.Parent = Button
+    Corner(Button, 10)
 
-    local Label = Instance.new("TextLabel")
-    Label.Parent = Button
-    Label.BackgroundTransparency = 1
-    Label.Position = UDim2.new(0, 14, 0, 0)
-    Label.Size = UDim2.new(1, -85, 1, 0)
-    Label.Text = text
-    Label.TextColor3 = Color3.fromRGB(235, 230, 245)
-    Label.TextSize = 13
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextXAlignment = Enum.TextXAlignment.Left
+    local NameLabel = Text(
+        Button,
+        name,
+        14,
+        Color3.fromRGB(235,230,245)
+    )
+    NameLabel.Position = UDim2.new(0,14,0,8)
+    NameLabel.Size = UDim2.new(1,-75,0,20)
+    NameLabel.Font = Enum.Font.GothamMedium
 
-    local Toggle = Instance.new("Frame")
-    Toggle.Parent = Button
-    Toggle.Position = UDim2.new(1, -55, 0.5, -11)
-    Toggle.Size = UDim2.new(0, 40, 0, 22)
-    Toggle.BorderSizePixel = 0
+    local DescLabel = Text(
+        Button,
+        description,
+        10,
+        Color3.fromRGB(135,125,150)
+    )
+    DescLabel.Position = UDim2.new(0,14,0,29)
+    DescLabel.Size = UDim2.new(1,-75,0,18)
 
-    local TC = Instance.new("UICorner")
-    TC.CornerRadius = UDim.new(1, 0)
-    TC.Parent = Toggle
+    local Switch = Instance.new("Frame")
+    Switch.Size = UDim2.fromOffset(42,22)
+    Switch.Position = UDim2.new(1,-56,0.5,-11)
+    Switch.BorderSizePixel = 0
+    Switch.Parent = Button
 
-    local Dot = Instance.new("Frame")
-    Dot.Parent = Toggle
-    Dot.Size = UDim2.new(0, 16, 0, 16)
-    Dot.Position = UDim2.new(0, 3, 0.5, -8)
-    Dot.BorderSizePixel = 0
+    Corner(Switch,11)
 
-    local DC = Instance.new("UICorner")
-    DC.CornerRadius = UDim.new(1, 0)
-    DC.Parent = Dot
+    local Circle = Instance.new("Frame")
+    Circle.Size = UDim2.fromOffset(16,16)
+    Circle.Position = UDim2.new(0,3,0.5,-8)
+    Circle.BorderSizePixel = 0
+    Circle.Parent = Switch
 
-    local function Update()
+    Corner(Circle,8)
 
-        if Settings[setting] then
-
-            Toggle.BackgroundColor3 =
-                Color3.fromRGB(145, 90, 225)
-
-            Dot.BackgroundColor3 =
-                Color3.fromRGB(255, 255, 255)
-
-            Dot.Position =
-                UDim2.new(1, -19, 0.5, -8)
-
+    local function Refresh()
+        if Settings[key] then
+            Switch.BackgroundColor3 = Color3.fromRGB(105,65,175)
+            Circle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+            Circle.Position = UDim2.new(1,-19,0.5,-8)
         else
-
-            Toggle.BackgroundColor3 =
-                Color3.fromRGB(55, 48, 72)
-
-            Dot.BackgroundColor3 =
-                Color3.fromRGB(170, 160, 185)
-
-            Dot.Position =
-                UDim2.new(0, 3, 0.5, -8)
-
+            Switch.BackgroundColor3 = Color3.fromRGB(55,48,65)
+            Circle.BackgroundColor3 = Color3.fromRGB(170,165,180)
+            Circle.Position = UDim2.new(0,3,0.5,-8)
         end
     end
 
     Button.MouseButton1Click:Connect(function()
-        Settings[setting] = not Settings[setting]
-        Update()
+        Settings[key] = not Settings[key]
+        Refresh()
     end)
 
-    Update()
-
-    return Button
+    Toggles[key] = Refresh
+    Refresh()
 end
 
---==================================================
--- VISUAL SETTINGS
---==================================================
-
-CreateToggle(
-    "ESP",
-    62,
-    "ESP"
-)
-
-CreateToggle(
-    "Box ESP",
-    118,
-    "BoxESP"
-)
-
-CreateToggle(
-    "Name ESP",
-    174,
-    "NameESP"
-)
-
-CreateToggle(
-    "Distance ESP",
-    230,
-    "DistanceESP"
-)
-
-CreateToggle(
-    "Tracer",
-    286,
-    "Tracer"
-)
+CreateToggle("ESP", "Enable player ESP", "ESP", 3)
+CreateToggle("Box", "Rectangle around players", "Box", 4)
+CreateToggle("Name", "Show player name", "Name", 5)
+CreateToggle("Distance", "Show distance", "Distance", 6)
+CreateToggle("Health", "Show HP and health bar", "Health", 7)
+CreateToggle("Tracer", "Line from screen bottom", "Tracer", 8)
 
 --==================================================
--- ESP SYSTEM
+-- UPDATE LAYOUT
 --==================================================
+
+local function UpdateContent()
+    VisualPage.Size = UDim2.new(1,0,1,0)
+end
+
+UpdateSize()
+UpdateContent()
+
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+    task.wait()
+    UpdateSize()
+    UpdateContent()
+end)
+
+print("[Rusted Visual] Menu loaded")
+
+--// RUSTED VISUAL HUB
+--// Part 2/2
+
+--==================================================
+-- ESP GUI
+--==================================================
+
+local ESPGui = Instance.new("ScreenGui")
+ESPGui.Name = "RustedESP"
+ESPGui.ResetOnSpawn = false
+ESPGui.IgnoreGuiInset = true
+ESPGui.DisplayOrder = 1
+ESPGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ESPGui.Parent = PlayerGui
 
 local ESPObjects = {}
 
-local function RemoveESP(player)
+--==================================================
+-- LINE
+--==================================================
 
-    local data = ESPObjects[player]
+local function MakeLine()
+    local line = Instance.new("Frame")
+    line.BorderSizePixel = 0
+    line.BackgroundColor3 = Color3.fromRGB(170,100,255)
+    line.AnchorPoint = Vector2.new(0.5,0.5)
+    line.Visible = false
+    line.ZIndex = 2
+    line.Parent = ESPGui
+    return line
+end
 
-    if not data then
+local function SetLine(line, a, b, thickness)
+    local dx = b.X - a.X
+    local dy = b.Y - a.Y
+    local length = math.sqrt(dx * dx + dy * dy)
+
+    line.Size = UDim2.fromOffset(length, thickness or 2)
+    line.Position = UDim2.fromOffset(
+        (a.X + b.X) / 2,
+        (a.Y + b.Y) / 2
+    )
+
+    line.Rotation = math.deg(math.atan2(dy, dx))
+    line.Visible = true
+end
+
+--==================================================
+-- PLAYER ESP
+--==================================================
+
+local function CreateESP(player)
+    if player == LocalPlayer then
         return
     end
 
-    if data.Highlight then
-        data.Highlight:Destroy()
+    if ESPObjects[player] then
+        return
     end
 
-    if data.Billboard then
-        data.Billboard:Destroy()
+    local data = {}
+
+    data.Top = MakeLine()
+    data.Bottom = MakeLine()
+    data.Left = MakeLine()
+    data.Right = MakeLine()
+
+    data.Tracer = MakeLine()
+
+    data.Name = Instance.new("TextLabel")
+    data.Name.BackgroundTransparency = 1
+    data.Name.TextColor3 = Color3.fromRGB(255,255,255)
+    data.Name.TextStrokeTransparency = 0.4
+    data.Name.Font = Enum.Font.GothamBold
+    data.Name.TextSize = 13
+    data.Name.TextXAlignment = Enum.TextXAlignment.Center
+    data.Name.Visible = false
+    data.Name.ZIndex = 3
+    data.Name.Parent = ESPGui
+
+    data.Distance = Instance.new("TextLabel")
+    data.Distance.BackgroundTransparency = 1
+    data.Distance.TextColor3 = Color3.fromRGB(190,160,255)
+    data.Distance.TextStrokeTransparency = 0.4
+    data.Distance.Font = Enum.Font.Gotham
+    data.Distance.TextSize = 11
+    data.Distance.TextXAlignment = Enum.TextXAlignment.Center
+    data.Distance.Visible = false
+    data.Distance.ZIndex = 3
+    data.Distance.Parent = ESPGui
+
+    data.Health = Instance.new("TextLabel")
+    data.Health.BackgroundTransparency = 1
+    data.Health.TextColor3 = Color3.fromRGB(100,255,120)
+    data.Health.TextStrokeTransparency = 0.4
+    data.Health.Font = Enum.Font.GothamBold
+    data.Health.TextSize = 11
+    data.Health.TextXAlignment = Enum.TextXAlignment.Center
+    data.Health.Visible = false
+    data.Health.ZIndex = 3
+    data.Health.Parent = ESPGui
+
+    data.HealthBack = Instance.new("Frame")
+    data.HealthBack.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    data.HealthBack.BorderSizePixel = 0
+    data.HealthBack.Visible = false
+    data.HealthBack.ZIndex = 2
+    data.HealthBack.Parent = ESPGui
+
+    data.HealthFill = Instance.new("Frame")
+    data.HealthFill.BackgroundColor3 = Color3.fromRGB(80,220,100)
+    data.HealthFill.BorderSizePixel = 0
+    data.HealthFill.Parent = data.HealthBack
+
+    ESPObjects[player] = data
+end
+
+local function HideObject(object)
+    if not object then
+        return
     end
 
-    if data.Tracer then
-        data.Tracer:Remove()
+    object.Top.Visible = false
+    object.Bottom.Visible = false
+    object.Left.Visible = false
+    object.Right.Visible = false
+
+    object.Tracer.Visible = false
+
+    object.Name.Visible = false
+    object.Distance.Visible = false
+    object.Health.Visible = false
+
+    object.HealthBack.Visible = false
+end
+
+--==================================================
+-- REMOVE ESP
+--==================================================
+
+local function RemoveESP(player)
+    local object = ESPObjects[player]
+
+    if not object then
+        return
+    end
+
+    for _, value in pairs(object) do
+        if typeof(value) == "Instance" then
+            value:Destroy()
+        end
     end
 
     ESPObjects[player] = nil
 end
 
-local function CreateESP(player)
+--==================================================
+-- GET SCREEN BOUNDS
+--==================================================
 
-    if player == LocalPlayer then
-        return
+local function GetBounds(character)
+    local cf, size = character:GetBoundingBox()
+
+    local corners = {
+        Vector3.new(-size.X/2,-size.Y/2,-size.Z/2),
+        Vector3.new(-size.X/2,-size.Y/2,size.Z/2),
+        Vector3.new(-size.X/2,size.Y/2,-size.Z/2),
+        Vector3.new(-size.X/2,size.Y/2,size.Z/2),
+        Vector3.new(size.X/2,-size.Y/2,-size.Z/2),
+        Vector3.new(size.X/2,-size.Y/2,size.Z/2),
+        Vector3.new(size.X/2,size.Y/2,-size.Z/2),
+        Vector3.new(size.X/2,size.Y/2,size.Z/2),
+    }
+
+    local minX = math.huge
+    local minY = math.huge
+    local maxX = -math.huge
+    local maxY = -math.huge
+
+    local visible = false
+
+    for _, corner in ipairs(corners) do
+        local world = cf:PointToWorldSpace(corner)
+        local screen, onScreen = Camera:WorldToViewportPoint(world)
+
+        if screen.Z > 0 then
+            visible = true
+
+            minX = math.min(minX, screen.X)
+            minY = math.min(minY, screen.Y)
+            maxX = math.max(maxX, screen.X)
+            maxY = math.max(maxY, screen.Y)
+        end
     end
 
-    RemoveESP(player)
+    if not visible then
+        return nil
+    end
+
+    return minX, minY, maxX, maxY
+end
+
+--==================================================
+-- UPDATE ESP
+--==================================================
+
+local function UpdatePlayerESP(player, object)
+    if not Settings.ESP then
+        HideObject(object)
+        return
+    end
 
     local character = player.Character
 
     if not character then
+        HideObject(object)
         return
     end
 
-    local root =
-        character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
 
-    if not root then
+    if not humanoid or not root or humanoid.Health <= 0 then
+        HideObject(object)
         return
     end
 
-    -- Highlight / Box base
-    local Highlight = Instance.new("Highlight")
+    local minX, minY, maxX, maxY = GetBounds(character)
 
-    Highlight.Name = "RustedESP"
-    Highlight.Adornee = character
-    Highlight.DepthMode =
-        Enum.HighlightDepthMode.AlwaysOnTop
+    if not minX then
+        HideObject(object)
+        return
+    end
 
-    Highlight.FillColor =
-        Color3.fromRGB(145, 90, 225)
+    local width = maxX - minX
+    local height = maxY - minY
 
-    Highlight.OutlineColor =
-        Color3.fromRGB(220, 180, 255)
+    -- BOX
+    if Settings.Box then
+        SetLine(
+            object.Top,
+            Vector2.new(minX,minY),
+            Vector2.new(maxX,minY),
+            2
+        )
 
-    Highlight.FillTransparency = 0.82
-    Highlight.OutlineTransparency = 0
+        SetLine(
+            object.Bottom,
+            Vector2.new(minX,maxY),
+            Vector2.new(maxX,maxY),
+            2
+        )
 
-    Highlight.Parent = game:GetService("CoreGui")
+        SetLine(
+            object.Left,
+            Vector2.new(minX,minY),
+            Vector2.new(minX,maxY),
+            2
+        )
 
-    -- Name + distance
-    local Billboard = Instance.new("BillboardGui")
+        SetLine(
+            object.Right,
+            Vector2.new(maxX,minY),
+            Vector2.new(maxX,maxY),
+            2
+        )
+    else
+        object.Top.Visible = false
+        object.Bottom.Visible = false
+        object.Left.Visible = false
+        object.Right.Visible = false
+    end
 
-    Billboard.Name = "RustedInfo"
-    Billboard.Adornee = root
-    Billboard.Size = UDim2.new(0, 200, 0, 45)
-    Billboard.StudsOffset = Vector3.new(0, 3.2, 0)
-    Billboard.AlwaysOnTop = true
-    Billboard.Parent = game:GetService("CoreGui")
+    -- NAME
+    if Settings.Name then
+        object.Name.Text = player.DisplayName
 
-    local Text = Instance.new("TextLabel")
+        object.Name.Size = UDim2.fromOffset(
+            math.max(width,80),
+            20
+        )
 
-    Text.Parent = Billboard
-    Text.BackgroundTransparency = 1
-    Text.Size = UDim2.new(1, 0, 1, 0)
+        object.Name.Position = UDim2.fromOffset(
+            (minX + maxX)/2 - math.max(width,80)/2,
+            minY - 22
+        )
 
-    Text.Font = Enum.Font.GothamBold
-    Text.TextSize = 13
+        object.Name.Visible = true
+    else
+        object.Name.Visible = false
+    end
 
-    Text.TextColor3 =
-        Color3.fromRGB(220, 190, 255)
+    -- DISTANCE
+    if Settings.Distance then
+        local distance = (Camera.CFrame.Position - root.Position).Magnitude
 
-    Text.TextStrokeTransparency = 0.2
+        object.Distance.Text = math.floor(distance) .. " studs"
 
-    -- Tracer
-    local Tracer = Drawing.new("Line")
+        object.Distance.Size = UDim2.fromOffset(
+            math.max(width,80),
+            18
+        )
 
-    Tracer.Thickness = 1.5
-    Tracer.Transparency = 1
-    Tracer.Color =
-        Color3.fromRGB(185, 130, 255)
+        object.Distance.Position = UDim2.fromOffset(
+            (minX + maxX)/2 - math.max(width,80)/2,
+            maxY + 2
+        )
 
-    ESPObjects[player] = {
-        Character = character,
-        Highlight = Highlight,
-        Billboard = Billboard,
-        Text = Text,
-        Tracer = Tracer
-    }
+        object.Distance.Visible = true
+    else
+        object.Distance.Visible = false
+    end
+
+    -- HEALTH
+    if Settings.Health then
+        local hp = math.max(0, humanoid.Health)
+        local maxHP = math.max(1, humanoid.MaxHealth)
+        local percent = math.clamp(hp / maxHP, 0, 1)
+
+        object.Health.Text =
+            math.floor(hp) .. " / " .. math.floor(maxHP)
+
+        object.Health.Size = UDim2.fromOffset(
+            80,
+            18
+        )
+
+        object.Health.Position = UDim2.fromOffset(
+            minX - 85,
+            minY
+        )
+
+        object.Health.Visible = true
+
+        object.HealthBack.Size = UDim2.fromOffset(
+            5,
+            height
+        )
+
+        object.HealthBack.Position = UDim2.fromOffset(
+            minX - 9,
+            minY
+        )
+
+        object.HealthBack.Visible = true
+
+        object.HealthFill.Size = UDim2.new(
+            1,
+            0,
+            percent,
+            0
+        )
+
+        object.HealthFill.Position = UDim2.new(
+            0,
+            0,
+            1 - percent,
+            0
+        )
+
+        if percent > 0.6 then
+            object.HealthFill.BackgroundColor3 =
+                Color3.fromRGB(80,220,100)
+        elseif percent > 0.3 then
+            object.HealthFill.BackgroundColor3 =
+                Color3.fromRGB(255,190,60)
+        else
+            object.HealthFill.BackgroundColor3 =
+                Color3.fromRGB(255,70,70)
+        end
+    else
+        object.Health.Visible = false
+        object.HealthBack.Visible = false
+    end
+
+    -- TRACER
+    if Settings.Tracer then
+        local screen = Camera.ViewportSize
+
+        SetLine(
+            object.Tracer,
+            Vector2.new(screen.X / 2, screen.Y),
+            Vector2.new((minX + maxX)/2, maxY),
+            1.5
+        )
+    else
+        object.Tracer.Visible = false
+    end
 end
 
 --==================================================
--- PLAYER TRACKING
+-- PLAYER CONNECTIONS
 --==================================================
 
-local function SetupPlayer(player)
-
-    if player == LocalPlayer then
-        return
-    end
-
-    if player.Character then
-        task.defer(function()
-            CreateESP(player)
-        end)
-    end
-
-    player.CharacterAdded:Connect(function()
-        task.wait(0.15)
-        CreateESP(player)
-    end)
-
-    player.CharacterRemoving:Connect(function()
-        RemoveESP(player)
-    end)
-end
-
-for _, player in ipairs(
-    Players:GetPlayers()
-) do
-    SetupPlayer(player)
+for _, player in ipairs(Players:GetPlayers()) do
+    CreateESP(player)
 end
 
 Players.PlayerAdded:Connect(function(player)
-    SetupPlayer(player)
+    CreateESP(player)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -452,113 +803,53 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 --==================================================
--- UPDATE ESP
+-- RENDER LOOP
 --==================================================
 
-local Camera = workspace.CurrentCamera
-
 RunService.RenderStepped:Connect(function()
-
-    for player, data in pairs(ESPObjects) do
-
-        local character = player.Character
-
-        local root =
-            character
-            and character:FindFirstChild(
-                "HumanoidRootPart"
-            )
-
-        if not character or not root then
-            continue
-        end
-
-        -- Main ESP
-        data.Highlight.Enabled =
-            Settings.ESP and Settings.BoxESP
-
-        -- Name / Distance
-        data.Billboard.Enabled =
-            Settings.ESP and
-            (Settings.NameESP or Settings.DistanceESP)
-
-        if data.Billboard.Enabled then
-
-            local text = ""
-
-            if Settings.NameESP then
-                text = player.DisplayName
-            end
-
-            if Settings.DistanceESP then
-
-                local myCharacter =
-                    LocalPlayer.Character
-
-                local myRoot =
-                    myCharacter
-                    and myCharacter:FindFirstChild(
-                        "HumanoidRootPart"
-                    )
-
-                if myRoot then
-
-                    local distance =
-                        math.floor(
-                            (
-                                myRoot.Position -
-                                root.Position
-                            ).Magnitude
-                        )
-
-                    if text ~= "" then
-                        text = text ..
-                            "\n[" ..
-                            distance ..
-                            " studs]"
-                    else
-                        text =
-                            "[" ..
-                            distance ..
-                            " studs]"
-                    end
-                end
-            end
-
-            data.Text.Text = text
-        end
-
-        -- Tracer
-        if Settings.ESP and Settings.Tracer then
-
-            local position, visible =
-                Camera:WorldToViewportPoint(
-                    root.Position
-                )
-
-            if visible then
-
-                data.Tracer.Visible = true
-
-                data.Tracer.From =
-                    Vector2.new(
-                        Camera.ViewportSize.X / 2,
-                        Camera.ViewportSize.Y
-                    )
-
-                data.Tracer.To =
-                    Vector2.new(
-                        position.X,
-                        position.Y
-                    )
-
-            else
-                data.Tracer.Visible = false
-            end
-
+    for player, object in pairs(ESPObjects) do
+        if player.Parent == Players then
+            UpdatePlayerESP(player, object)
         else
-            data.Tracer.Visible = false
+            RemoveESP(player)
         end
+    end
+end)
+
+--==================================================
+-- MINIMIZE
+--==================================================
+
+local minimized = false
+local savedSize = Main.Size
+local savedPosition = Main.Position
+
+Minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+
+    if minimized then
+        savedSize = Main.Size
+        savedPosition = Main.Position
+
+        Sidebar.Visible = false
+        Content.Visible = false
+
+        Main.Size = UDim2.fromOffset(
+            math.min(300, Camera.ViewportSize.X * 0.7),
+            58
+        )
+
+        Main.Position = UDim2.new(
+            0.5,
+            -Main.AbsoluteSize.X / 2,
+            0,
+            10
+        )
+    else
+        Sidebar.Visible = true
+        Content.Visible = true
+
+        UpdateSize()
     end
 end)
 
@@ -567,74 +858,94 @@ end)
 --==================================================
 
 Close.MouseButton1Click:Connect(function()
+    Gui.Enabled = false
 
-    for player in pairs(ESPObjects) do
-        RemoveESP(player)
-    end
-
-    ScreenGui:Destroy()
+    -- ESP остаётся работать.
 end)
 
 --==================================================
 -- DRAG
 --==================================================
 
-local Dragging = false
-local DragStart
-local StartPosition
+local dragging = false
+local dragStart
+local startPosition
 
-Top.InputBegan:Connect(function(input)
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
 
-    if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
-        if input.Position.X >
-            Top.AbsolutePosition.X +
-            Top.AbsoluteSize.X - 90 then
+        if input.Position.X > Close.AbsolutePosition.X - 10 then
             return
         end
 
-        Dragging = true
-        DragStart = input.Position
-        StartPosition = Main.Position
+        dragging = true
+        dragStart = input.Position
+        startPosition = Main.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
 
-UIS.InputChanged:Connect(function(input)
-
-    if not Dragging then
+UserInputService.InputChanged:Connect(function(input)
+    if not dragging then
         return
     end
 
-    if input.UserInputType ==
-        Enum.UserInputType.MouseMovement
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
-        local Delta =
-            input.Position - DragStart
-
-        Main.Position = UDim2.new(
-            StartPosition.X.Scale,
-            StartPosition.X.Offset + Delta.X,
-
-            StartPosition.Y.Scale,
-            StartPosition.Y.Offset + Delta.Y
-        )
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement
+        and input.UserInputType ~= Enum.UserInputType.Touch then
+        return
     end
+
+    local delta = input.Position - dragStart
+
+    Main.Position = UDim2.new(
+        startPosition.X.Scale,
+        startPosition.X.Offset + delta.X,
+        startPosition.Y.Scale,
+        startPosition.Y.Offset + delta.Y
+    )
 end)
 
-UIS.InputEnded:Connect(function(input)
+--==================================================
+-- REOPEN MENU
+--==================================================
 
-    if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
+local OpenButton = Instance.new("TextButton")
+OpenButton.Name = "OpenRustedMenu"
+OpenButton.Size = UDim2.fromOffset(45,45)
+OpenButton.Position = UDim2.new(0,15,0.5,-22)
+OpenButton.BackgroundColor3 = Color3.fromRGB(25,20,40)
+OpenButton.BorderSizePixel = 0
+OpenButton.Text = "◈"
+OpenButton.TextSize = 20
+OpenButton.TextColor3 = Color3.fromRGB(180,110,255)
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.Visible = false
+OpenButton.Parent = Gui
 
-        Dragging = false
-    end
+Corner(OpenButton,12)
+Stroke(OpenButton,1,0.1)
+
+Close.MouseButton1Click:Connect(function()
+    OpenButton.Visible = true
 end)
 
-print("🌙 Rusted Lunar Visual loaded!")
+OpenButton.MouseButton1Click:Connect(function()
+    Gui.Enabled = true
+    OpenButton.Visible = false
+    UpdateSize()
+end)
+
+--==================================================
+-- START
+--==================================================
+
+Gui.Enabled = true
+UpdateSize()
+
+print("[Rusted Visual] ESP + Menu started")
