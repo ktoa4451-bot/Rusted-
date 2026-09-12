@@ -574,7 +574,7 @@ Subtitle.Position =
 local Version =
     MakeText(
         TopBar,
-        "v1.0",
+        "v2.0",
         10,
         Colors.PurpleLight,
         Enum.Font.GothamBold
