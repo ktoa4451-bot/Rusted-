@@ -1,107 +1,72 @@
---// Rusted Compact v2.1
---// Part 1/2
---// UI Core + Settings + Categories
+--// RUSTED HUB v2.2
+--// PART 1/4 - CORE
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
+local UIS = game:GetService("UserInputService")
 
-local LocalPlayer = Players.LocalPlayer
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
---==================================================
--- SETTINGS
---==================================================
-
+--// Settings
 local Settings = {
-    Enabled = true,
-
     ESP = true,
     BoxESP = true,
     NameESP = true,
     DistanceESP = true,
     HealthESP = true,
-    HealthBar = true,
-    Tracer = false,
-    MaxDistance = 2500,
+    Tracer = true,
 
     AimAssist = false,
-    AimTarget = "Head",
-    AimFOV = 120,
-    AimSmoothness = 0.15,
     TeamCheck = true,
     WallCheck = true,
 
-    WalkSpeed = 16,
-    JumpPower = 50,
-
     Crosshair = false,
-    MenuVisible = true
+    WalkSpeed = 16,
+    JumpPower = 50
 }
 
---==================================================
--- COLORS
---==================================================
+--// Theme
+local C = {
+    BG = Color3.fromRGB(7,7,18),
+    Side = Color3.fromRGB(10,9,24),
+    Card = Color3.fromRGB(16,14,35),
+    Hover = Color3.fromRGB(27,20,55),
 
-local Colors = {
-    Main = Color3.fromRGB(18, 18, 22),
-    Card = Color3.fromRGB(25, 25, 30),
-    CardHover = Color3.fromRGB(32, 32, 39),
+    Purple = Color3.fromRGB(135,55,255),
+    Purple2 = Color3.fromRGB(180,125,255),
 
-    Sidebar = Color3.fromRGB(14, 14, 18),
-    Topbar = Color3.fromRGB(21, 21, 26),
-
-    Accent = Color3.fromRGB(150, 90, 255),
-    AccentDark = Color3.fromRGB(115, 65, 205),
-
-    White = Color3.fromRGB(245, 245, 250),
-    Text = Color3.fromRGB(205, 205, 215),
-    Muted = Color3.fromRGB(125, 125, 140),
-
-    Red = Color3.fromRGB(235, 75, 75),
-    Green = Color3.fromRGB(75, 210, 125)
+    White = Color3.fromRGB(240,235,255),
+    Gray = Color3.fromRGB(145,135,180),
+    Red = Color3.fromRGB(235,75,90)
 }
 
---==================================================
--- HELPERS
---==================================================
-
-local function New(class, props, parent)
-    local obj = Instance.new(class)
-
-    for property, value in pairs(props or {}) do
-        obj[property] = value
-    end
-
-    if parent then
-        obj.Parent = parent
-    end
-
-    return obj
+--// Cleanup
+local Old = PlayerGui:FindFirstChild("RustedHub")
+if Old then
+    Old:Destroy()
 end
 
-local function Corner(obj, radius)
-    return New("UICorner", {
-        CornerRadius = UDim.new(0, radius or 6)
-    }, obj)
+--// Helpers
+local function Corner(obj, size)
+    local x = Instance.new("UICorner")
+    x.CornerRadius = UDim.new(0,size or 10)
+    x.Parent = obj
 end
 
-local function Stroke(obj, color, transparency)
-    return New("UIStroke", {
-        Color = color or Colors.Accent,
-        Transparency = transparency or 0.5,
-        Thickness = 1
-    }, obj)
+local function Stroke(obj, color)
+    local x = Instance.new("UIStroke")
+    x.Color = color or C.Purple
+    x.Transparency = .45
+    x.Thickness = 1
+    x.Parent = obj
 end
 
-local function Tween(obj, time, props)
-    if not obj then return end
-
+local function Tween(obj, props, time)
     TweenService:Create(
         obj,
         TweenInfo.new(
-            time or 0.15,
+            time or .15,
             Enum.EasingStyle.Quad,
             Enum.EasingDirection.Out
         ),
@@ -109,1338 +74,705 @@ local function Tween(obj, time, props)
     ):Play()
 end
 
---==================================================
--- GUI
---==================================================
+--// ScreenGui
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "RustedHub"
+GUI.ResetOnSpawn = false
+GUI.IgnoreGuiInset = true
+GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+GUI.Parent = PlayerGui
 
-pcall(function()
-    local old = CoreGui:FindFirstChild("RustedHub")
-    if old then
-        old:Destroy()
-    end
-end)
+--// Main
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = GUI
+Main.Size = UDim2.fromOffset(900,560)
+Main.Position = UDim2.new(.5,-450,.5,-280)
+Main.BackgroundColor3 = C.BG
+Main.BorderSizePixel = 0
+Main.Visible = true
 
-local GUI = New("ScreenGui", {
-    Name = "RustedHub",
-    ResetOnSpawn = false,
-    IgnoreGuiInset = true,
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-    DisplayOrder = 999,
-    Enabled = true
-})
+Corner(Main,18)
+Stroke(Main,C.Purple)
 
-local GUIParent
+--// TopBar
+local Top = Instance.new("Frame")
+Top.Parent = Main
+Top.Size = UDim2.new(1,0,0,82)
+Top.BackgroundColor3 = C.Side
+Top.BorderSizePixel = 0
 
-pcall(function()
-    GUI.Parent = CoreGui
-    GUIParent = CoreGui
-end)
+--// Logo
+local Logo = Instance.new("TextLabel")
+Logo.Parent = Top
+Logo.Position = UDim2.fromOffset(20,15)
+Logo.Size = UDim2.fromOffset(55,55)
+Logo.BackgroundColor3 = Color3.fromRGB(45,20,90)
+Logo.Text = "◇"
+Logo.TextColor3 = C.Purple2
+Logo.TextSize = 32
+Logo.Font = Enum.Font.GothamBold
 
-if not GUI.Parent then
-    GUI.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    GUIParent = GUI.Parent
-end
+Corner(Logo,15)
 
---==================================================
--- MAIN WINDOW
---==================================================
+--// Title
+local Title = Instance.new("TextLabel")
+Title.Parent = Top
+Title.Position = UDim2.fromOffset(88,13)
+Title.Size = UDim2.fromOffset(250,32)
+Title.BackgroundTransparency = 1
+Title.Text = "RUSTED"
+Title.TextColor3 = C.White
+Title.TextSize = 25
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
-local MENU_WIDTH = 650
-local MENU_HEIGHT = 510
+local Sub = Instance.new("TextLabel")
+Sub.Parent = Top
+Sub.Position = UDim2.fromOffset(90,43)
+Sub.Size = UDim2.fromOffset(250,20)
+Sub.BackgroundTransparency = 1
+Sub.Text = "PRIVATE • BEST • SAFE"
+Sub.TextColor3 = C.Gray
+Sub.TextSize = 10
+Sub.Font = Enum.Font.GothamMedium
+Sub.TextXAlignment = Enum.TextXAlignment.Left
 
-local Main = New("Frame", {
-    Name = "Main",
-    Size = UDim2.fromOffset(MENU_WIDTH, MENU_HEIGHT),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    BackgroundColor3 = Colors.Main,
-    BorderSizePixel = 0,
-    Visible = true
-}, GUI)
+--// Minimize
+local Min = Instance.new("TextButton")
+Min.Parent = Top
+Min.Position = UDim2.new(1,-90,0,20)
+Min.Size = UDim2.fromOffset(35,35)
+Min.BackgroundTransparency = 1
+Min.Text = "−"
+Min.TextColor3 = C.White
+Min.TextSize = 25
+Min.Font = Enum.Font.GothamBold
+Min.AutoButtonColor = false
 
-Corner(Main, 10)
-Stroke(Main, Color3.fromRGB(55, 55, 65), 0.25)
+--// Close
+local Close = Instance.new("TextButton")
+Close.Parent = Top
+Close.Position = UDim2.new(1,-48,0,20)
+Close.Size = UDim2.fromOffset(35,35)
+Close.BackgroundTransparency = 1
+Close.Text = "×"
+Close.TextColor3 = C.White
+Close.TextSize = 27
+Close.Font = Enum.Font.GothamBold
+Close.AutoButtonColor = false
 
---==================================================
--- TOPBAR
---==================================================
+--// Sidebar
+local Sidebar = Instance.new("Frame")
+Sidebar.Parent = Main
+Sidebar.Position = UDim2.fromOffset(0,82)
+Sidebar.Size = UDim2.new(0,190,1,-82)
+Sidebar.BackgroundColor3 = C.Side
+Sidebar.BorderSizePixel = 0
 
-local Topbar = New("Frame", {
-    Size = UDim2.new(1, 0, 0, 58),
-    BackgroundColor3 = Colors.Topbar,
-    BorderSizePixel = 0
-}, Main)
+--// Sidebar title
+local MenuTitle = Instance.new("TextLabel")
+MenuTitle.Parent = Sidebar
+MenuTitle.Position = UDim2.fromOffset(20,15)
+MenuTitle.Size = UDim2.fromOffset(140,25)
+MenuTitle.BackgroundTransparency = 1
+MenuTitle.Text = "MENU"
+MenuTitle.TextColor3 = C.Gray
+MenuTitle.TextSize = 10
+MenuTitle.Font = Enum.Font.GothamBold
+MenuTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-Corner(Topbar, 10)
+--// Content
+local Content = Instance.new("Frame")
+Content.Parent = Main
+Content.Position = UDim2.fromOffset(190,82)
+Content.Size = UDim2.new(1,-190,1,-82)
+Content.BackgroundTransparency = 1
+Content.BorderSizePixel = 0
 
-local Title = New("TextLabel", {
-    Size = UDim2.new(1, -130, 1, 0),
-    Position = UDim2.fromOffset(18, 0),
-    BackgroundTransparency = 1,
-    Text = "Rusted Hub",
-    TextColor3 = Colors.White,
-    TextSize = 21,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, Topbar)
+--// Page title
+local PageTitle = Instance.new("TextLabel")
+PageTitle.Parent = Content
+PageTitle.Position = UDim2.fromOffset(25,18)
+PageTitle.Size = UDim2.fromOffset(350,35)
+PageTitle.BackgroundTransparency = 1
+PageTitle.Text = "Visual"
+PageTitle.TextColor3 = C.White
+PageTitle.TextSize = 24
+PageTitle.Font = Enum.Font.GothamBold
+PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-local Version = New("TextLabel", {
-    Size = UDim2.fromOffset(80, 30),
-    Position = UDim2.new(1, -145, 0.5, -15),
-    BackgroundTransparency = 1,
-    Text = "v2.1",
-    TextColor3 = Colors.Accent,
-    TextSize = 13,
-    Font = Enum.Font.GothamMedium
-}, Topbar)
+local PageSub = Instance.new("TextLabel")
+PageSub.Parent = Content
+PageSub.Position = UDim2.fromOffset(25,50)
+PageSub.Size = UDim2.fromOffset(400,22)
+PageSub.BackgroundTransparency = 1
+PageSub.Text = "Настройки визуальных функций"
+PageSub.TextColor3 = C.Gray
+PageSub.TextSize = 12
+PageSub.Font = Enum.Font.Gotham
+PageSub.TextXAlignment = Enum.TextXAlignment.Left
 
-local CloseButton = New("TextButton", {
-    Size = UDim2.fromOffset(38, 34),
-    Position = UDim2.new(1, -48, 0.5, -17),
-    BackgroundColor3 = Colors.Card,
-    Text = "×",
-    TextColor3 = Colors.Text,
-    TextSize = 22,
-    Font = Enum.Font.GothamBold,
-    AutoButtonColor = false
-}, Topbar)
-
-Corner(CloseButton, 7)
-
-CloseButton.MouseEnter:Connect(function()
-    Tween(CloseButton, 0.12, {
-        BackgroundColor3 = Colors.Red,
-        TextColor3 = Colors.White
-    })
-end)
-
-CloseButton.MouseLeave:Connect(function()
-    Tween(CloseButton, 0.12, {
-        BackgroundColor3 = Colors.Card,
-        TextColor3 = Colors.Text
-    })
-end)
-
---==================================================
--- SIDEBAR
---==================================================
-
-local Sidebar = New("Frame", {
-    Size = UDim2.new(0, 145, 1, -58),
-    Position = UDim2.fromOffset(0, 58),
-    BackgroundColor3 = Colors.Sidebar,
-    BorderSizePixel = 0
-}, Main)
-
-local SidebarPadding = New("UIPadding", {
-    PaddingTop = UDim.new(0, 12),
-    PaddingLeft = UDim.new(0, 10),
-    PaddingRight = UDim.new(0, 10)
-}, Sidebar)
-
-local SidebarLayout = New("UIListLayout", {
-    Padding = UDim.new(0, 6),
-    SortOrder = Enum.SortOrder.LayoutOrder
-}, Sidebar)
-
---==================================================
--- CONTENT
---==================================================
-
-local Content = New("Frame", {
-    Size = UDim2.new(1, -145, 1, -58),
-    Position = UDim2.fromOffset(145, 58),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0
-}, Main)
-
-local ContentTitle = New("TextLabel", {
-    Size = UDim2.new(1, -35, 0, 42),
-    Position = UDim2.fromOffset(18, 12),
-    BackgroundTransparency = 1,
-    Text = "Visual",
-    TextColor3 = Colors.White,
-    TextSize = 20,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, Content)
-
-local Page = New("ScrollingFrame", {
-    Size = UDim2.new(1, -30, 1, -62),
-    Position = UDim2.fromOffset(15, 55),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    ScrollBarThickness = 3,
-    ScrollBarImageColor3 = Colors.Accent,
-    CanvasSize = UDim2.new()
-}, Content)
-
-local PagePadding = New("UIPadding", {
-    PaddingLeft = UDim.new(0, 5),
-    PaddingRight = UDim.new(0, 5),
-    PaddingBottom = UDim.new(0, 10)
-}, Page)
-
-local PageLayout = New("UIListLayout", {
-    Padding = UDim.new(0, 8),
-    SortOrder = Enum.SortOrder.LayoutOrder
-}, Page)
-
-PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    Page.CanvasSize = UDim2.new(
-        0,
-        0,
-        0,
-        PageLayout.AbsoluteContentSize.Y + 15
-    )
-end)
-
---==================================================
--- PAGES
---==================================================
-
+--// Pages
 local Pages = {}
 
-local Categories = {
+for _,name in ipairs({
     "Visual",
     "Combat",
     "Movement",
     "Misc",
     "Settings"
+}) do
+
+    local Page = Instance.new("ScrollingFrame")
+    Page.Name = name
+    Page.Parent = Content
+    Page.Position = UDim2.fromOffset(20,82)
+    Page.Size = UDim2.new(1,-40,1,-95)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 3
+    Page.ScrollBarImageColor3 = C.Purple
+    Page.Visible = false
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.CanvasSize = UDim2.new()
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Parent = Page
+    Layout.Padding = UDim.new(0,8)
+
+    Pages[name] = Page
+end
+
+print("[Rusted] Part 1 loaded")
+
+--// RUSTED HUB v2.2
+--// PART 2/4 - SIDEBAR + PAGES
+
+--// Category buttons
+local Categories = {
+    {Name = "Visual",   Icon = "◉"},
+    {Name = "Combat",   Icon = "⌁"},
+    {Name = "Movement", Icon = "↗"},
+    {Name = "Misc",     Icon = "◆"},
+    {Name = "Settings", Icon = "⚙"}
 }
 
-for _, category in ipairs(Categories) do
-    Pages[category] = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundTransparency = 1,
-        Visible = false
-    }, Page)
+local Buttons = {}
 
-    New("UIListLayout", {
-        Padding = UDim.new(0, 8),
-        SortOrder = Enum.SortOrder.LayoutOrder
-    }, Pages[category])
-end
-
-local CurrentCategory
-
---==================================================
--- CATEGORY BUTTON
---==================================================
-
-local function SelectCategory(category)
-    CurrentCategory = category
-    ContentTitle.Text = category
-
-    for name, page in pairs(Pages) do
-        page.Visible = (name == category)
+local function SelectPage(Name)
+    -- pages
+    for PageName, Page in pairs(Pages) do
+        Page.Visible = (PageName == Name)
     end
 
-    for _, child in ipairs(Sidebar:GetChildren()) do
-        if child:IsA("TextButton") then
-            local selected = child.Name == category
+    -- button colors
+    for ButtonName, Button in pairs(Buttons) do
+        local Selected = ButtonName == Name
 
-            Tween(child, 0.12, {
-                BackgroundColor3 = selected
-                    and Colors.Accent
-                    or Colors.Sidebar,
+        if Selected then
+            Button.BackgroundColor3 = C.Hover
+        else
+            Button.BackgroundColor3 = C.Side
+        end
 
-                TextColor3 = selected
-                    and Colors.White
-                    or Colors.Text
-            })
+        local Icon = Button:FindFirstChild("Icon")
+        local Label = Button:FindFirstChild("Label")
+
+        if Icon then
+            Icon.TextColor3 = Selected and C.Purple2 or C.Gray
+        end
+
+        if Label then
+            Label.TextColor3 = Selected and C.White or C.Gray
         end
     end
+
+    PageTitle.Text = Name
+
+    local Descriptions = {
+        Visual = "Настройки визуальных функций",
+        Combat = "Настройки боевых функций",
+        Movement = "Настройки движения",
+        Misc = "Дополнительные функции",
+        Settings = "Настройки Rusted Hub"
+    }
+
+    PageSub.Text = Descriptions[Name] or ""
+
+    print("[Rusted] Page:", Name)
 end
 
-for index, category in ipairs(Categories) do
-    local Button = New("TextButton", {
-        Name = category,
-        Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = Colors.Sidebar,
-        Text = category,
-        TextColor3 = Colors.Text,
-        TextSize = 13,
-        Font = Enum.Font.GothamMedium,
-        AutoButtonColor = false,
-        LayoutOrder = index
-    }, Sidebar)
+--// Create buttons
+for i,Data in ipairs(Categories) do
 
-    Corner(Button, 7)
+    local Button = Instance.new("TextButton")
+    Button.Name = Data.Name
+    Button.Parent = Sidebar
+    Button.Position = UDim2.fromOffset(12,45 + ((i-1) * 52))
+    Button.Size = UDim2.new(1,-24,0,44)
+    Button.BackgroundColor3 = C.Side
+    Button.BorderSizePixel = 0
+    Button.Text = ""
+    Button.AutoButtonColor = false
 
+    Corner(Button,10)
+
+    local Icon = Instance.new("TextLabel")
+    Icon.Name = "Icon"
+    Icon.Parent = Button
+    Icon.Position = UDim2.fromOffset(13,0)
+    Icon.Size = UDim2.fromOffset(25,44)
+    Icon.BackgroundTransparency = 1
+    Icon.Text = Data.Icon
+    Icon.TextColor3 = C.Gray
+    Icon.TextSize = 17
+    Icon.Font = Enum.Font.GothamBold
+
+    local Label = Instance.new("TextLabel")
+    Label.Name = "Label"
+    Label.Parent = Button
+    Label.Position = UDim2.fromOffset(48,0)
+    Label.Size = UDim2.new(1,-55,1,0)
+    Label.BackgroundTransparency = 1
+    Label.Text = Data.Name
+    Label.TextColor3 = C.Gray
+    Label.TextSize = 13
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    Buttons[Data.Name] = Button
+
+    -- hover
     Button.MouseEnter:Connect(function()
-        if CurrentCategory ~= category then
-            Tween(Button, 0.12, {
-                BackgroundColor3 = Colors.CardHover
-            })
+        if PageTitle.Text ~= Data.Name then
+            Tween(Button,{
+                BackgroundColor3 = C.Hover
+            },.12)
         end
     end)
 
     Button.MouseLeave:Connect(function()
-        if CurrentCategory ~= category then
-            Tween(Button, 0.12, {
-                BackgroundColor3 = Colors.Sidebar
-            })
+        if PageTitle.Text ~= Data.Name then
+            Tween(Button,{
+                BackgroundColor3 = C.Side
+            },.12)
         end
     end)
 
     Button.MouseButton1Click:Connect(function()
-        SelectCategory(category)
+        SelectPage(Data.Name)
     end)
 end
 
---==================================================
--- UI CONTROLS
---==================================================
+--// Sidebar separator
+local Separator = Instance.new("Frame")
+Separator.Parent = Sidebar
+Separator.Position = UDim2.fromOffset(20,315)
+Separator.Size = UDim2.new(1,-40,0,1)
+Separator.BackgroundColor3 = C.Purple
+Separator.BackgroundTransparency = .75
+Separator.BorderSizePixel = 0
 
-local function AddSection(category, title)
-    local section = New("TextLabel", {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.Muted,
-        TextSize = 12,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left
-    }, Pages[category])
+--// Status
+local Status = Instance.new("TextLabel")
+Status.Parent = Sidebar
+Status.Position = UDim2.new(0,20,1,-45)
+Status.Size = UDim2.new(1,-40,0,25)
+Status.BackgroundTransparency = 1
+Status.Text = "●  RUSTED ONLINE"
+Status.TextColor3 = C.Purple2
+Status.TextSize = 10
+Status.Font = Enum.Font.GothamBold
+Status.TextXAlignment = Enum.TextXAlignment.Left
 
-    return section
-end
+--// Select default page
+SelectPage("Visual")
 
-local function AddToggle(category, title, setting)
-    local holder = New("Frame", {
-        Size = UDim2.new(1, 0, 0, 48),
-        BackgroundColor3 = Colors.Card,
-        BorderSizePixel = 0
-    }, Pages[category])
+print("[Rusted] Part 2 loaded")
 
-    Corner(holder, 7)
+--// RUSTED HUB v2.2
+--// PART 3/4 - CONTROLS
 
-    local label = New("TextLabel", {
-        Size = UDim2.new(1, -80, 1, 0),
-        Position = UDim2.fromOffset(14, 0),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.Text,
-        TextSize = 13,
-        Font = Enum.Font.GothamMedium,
-        TextXAlignment = Enum.TextXAlignment.Left
-    }, holder)
+local function Toggle(Page, Name, Default, Callback)
 
-    local button = New("TextButton", {
-        Size = UDim2.fromOffset(42, 22),
-        Position = UDim2.new(1, -55, 0.5, -11),
-        BackgroundColor3 = Colors.Sidebar,
-        Text = "",
-        AutoButtonColor = false
-    }, holder)
+    local Row = Instance.new("Frame")
+    Row.Parent = Page
+    Row.Size = UDim2.new(1,0,0,52)
+    Row.BackgroundColor3 = C.Card
+    Row.BorderSizePixel = 0
 
-    Corner(button, 11)
+    Corner(Row,10)
+    Stroke(Row,Color3.fromRGB(55,35,90))
 
-    local knob = New("Frame", {
-        Size = UDim2.fromOffset(16, 16),
-        Position = UDim2.fromOffset(3, 3),
-        BackgroundColor3 = Colors.Muted,
-        BorderSizePixel = 0
-    }, button)
+    local Text = Instance.new("TextLabel")
+    Text.Parent = Row
+    Text.Position = UDim2.fromOffset(15,0)
+    Text.Size = UDim2.new(1,-80,1,0)
+    Text.BackgroundTransparency = 1
+    Text.Text = Name
+    Text.TextColor3 = C.White
+    Text.TextSize = 13
+    Text.Font = Enum.Font.GothamMedium
+    Text.TextXAlignment = Enum.TextXAlignment.Left
 
-    Corner(knob, 8)
+    local Switch = Instance.new("TextButton")
+    Switch.Parent = Row
+    Switch.Position = UDim2.new(1,-60,.5,-13)
+    Switch.Size = UDim2.fromOffset(45,26)
+    Switch.Text = ""
+    Switch.AutoButtonColor = false
+    Switch.BorderSizePixel = 0
+
+    Corner(Switch,13)
+
+    local Dot = Instance.new("Frame")
+    Dot.Parent = Switch
+    Dot.Size = UDim2.fromOffset(20,20)
+    Dot.Position = UDim2.fromOffset(3,3)
+    Dot.BorderSizePixel = 0
+
+    Corner(Dot,10)
+
+    local Value = Default
 
     local function Update()
-        local enabled = Settings[setting]
 
-        Tween(button, 0.12, {
-            BackgroundColor3 = enabled
-                and Colors.Accent
-                or Colors.Sidebar
-        })
+        if Value then
+            Switch.BackgroundColor3 = C.Purple
+            Dot.BackgroundColor3 = C.White
 
-        Tween(knob, 0.12, {
-            Position = enabled
-                and UDim2.new(1, -19, 0, 3)
-                or UDim2.fromOffset(3, 3),
+            Tween(Dot,{
+                Position = UDim2.new(1,-23,0,3)
+            },.12)
+        else
+            Switch.BackgroundColor3 = Color3.fromRGB(45,40,60)
+            Dot.BackgroundColor3 = C.Gray
 
-            BackgroundColor3 = enabled
-                and Colors.White
-                or Colors.Muted
-        })
+            Tween(Dot,{
+                Position = UDim2.fromOffset(3,3)
+            },.12)
+        end
+
+        if Callback then
+            Callback(Value)
+        end
     end
 
-    button.MouseButton1Click:Connect(function()
-        Settings[setting] = not Settings[setting]
+    Switch.MouseButton1Click:Connect(function()
+        Value = not Value
         Update()
     end)
 
     Update()
 
-    return holder
-end
-
-local function AddButton(category, title, callback)
-    local button = New("TextButton", {
-        Size = UDim2.new(1, 0, 0, 42),
-        BackgroundColor3 = Colors.Card,
-        Text = title,
-        TextColor3 = Colors.Text,
-        TextSize = 13,
-        Font = Enum.Font.GothamMedium,
-        AutoButtonColor = false
-    }, Pages[category])
-
-    Corner(button, 7)
-
-    button.MouseEnter:Connect(function()
-        Tween(button, 0.12, {
-            BackgroundColor3 = Colors.CardHover,
-            TextColor3 = Colors.White
-        })
-    end)
-
-    button.MouseLeave:Connect(function()
-        Tween(button, 0.12, {
-            BackgroundColor3 = Colors.Card,
-            TextColor3 = Colors.Text
-        })
-    end)
-
-    button.MouseButton1Click:Connect(function()
-        if callback then
-            task.spawn(callback)
-        end
-    end)
-
-    return button
-end
-
---==================================================
--- VISUAL PAGE
---==================================================
-
-AddSection("Visual", "ESP")
-
-AddToggle("Visual", "ESP", "ESP")
-AddToggle("Visual", "Box ESP", "BoxESP")
-AddToggle("Visual", "Name ESP", "NameESP")
-AddToggle("Visual", "Distance ESP", "DistanceESP")
-AddToggle("Visual", "Health ESP", "HealthESP")
-AddToggle("Visual", "Health Bar", "HealthBar")
-AddToggle("Visual", "Tracer", "Tracer")
-
---==================================================
--- COMBAT PAGE
---==================================================
-
-AddSection("Combat", "Aim Assist")
-
-AddToggle("Combat", "Aim Assist", "AimAssist")
-AddToggle("Combat", "Team Check", "TeamCheck")
-AddToggle("Combat", "Wall Check", "WallCheck")
-
---==================================================
--- MOVEMENT PAGE
---==================================================
-
-AddSection("Movement", "Player")
-
-AddButton("Movement", "Reset Movement", function()
-    Settings.WalkSpeed = 16
-    Settings.JumpPower = 50
-
-    local character = LocalPlayer.Character
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-    if humanoid then
-        humanoid.WalkSpeed = Settings.WalkSpeed
-        humanoid.JumpPower = Settings.JumpPower
-    end
-end)
-
---==================================================
--- MISC PAGE
---==================================================
-
-AddSection("Misc", "Interface")
-
-AddToggle("Misc", "Crosshair", "Crosshair")
-
-AddButton("Misc", "Reload UI", function()
-    Main.Visible = true
-    GUI.Enabled = true
-    Settings.MenuVisible = true
-end)
-
---==================================================
--- SETTINGS PAGE
---==================================================
-
-AddSection("Settings", "General")
-
-AddToggle("Settings", "Hub Enabled", "Enabled")
-AddToggle("Settings", "Menu Visible", "MenuVisible")
-
-AddButton("Settings", "Reset Settings", function()
-    Settings.Enabled = true
-
-    Settings.ESP = true
-    Settings.BoxESP = true
-    Settings.NameESP = true
-    Settings.DistanceESP = true
-    Settings.HealthESP = true
-    Settings.HealthBar = true
-    Settings.Tracer = false
-
-    Settings.AimAssist = false
-    Settings.TeamCheck = true
-    Settings.WallCheck = true
-
-    Settings.Crosshair = false
-
-    Settings.WalkSpeed = 16
-    Settings.JumpPower = 50
-end)
-
---==================================================
--- MINIMIZE / OPEN BUTTON
---==================================================
-
-local OpenButton = New("TextButton", {
-    Name = "OpenButton",
-    Size = UDim2.fromOffset(48, 48),
-    Position = UDim2.new(0, 18, 0.5, -24),
-    BackgroundColor3 = Colors.Accent,
-    Text = "R",
-    TextColor3 = Colors.White,
-    TextSize = 20,
-    Font = Enum.Font.GothamBold,
-    Visible = false,
-    AutoButtonColor = false
-}, GUI)
-
-Corner(OpenButton, 10)
-
-OpenButton.MouseButton1Click:Connect(function()
-    Main.Visible = true
-    OpenButton.Visible = false
-    Settings.MenuVisible = true
-end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    OpenButton.Visible = true
-    Settings.MenuVisible = false
-end)
-
---==================================================
--- DRAG
---==================================================
-
-local dragging = false
-local dragStart
-local startPosition
-
-Topbar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        dragging = true
-        dragStart = input.Position
-        startPosition = Main.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if not dragging then return end
-
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        local delta = input.Position - dragStart
-
-        Main.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
-        )
-    end
-end)
-
---==================================================
--- MOBILE / SCREEN SIZE
---==================================================
-
-local function UpdateScale()
-    local camera = workspace.CurrentCamera
-    if not camera then return end
-
-    local viewport = camera.ViewportSize
-
-    if viewport.X < 700 then
-        Main.Size = UDim2.new(
-            0.92,
-            0,
-            0,
-            math.min(MENU_HEIGHT, viewport.Y - 40)
-        )
-    else
-        Main.Size = UDim2.fromOffset(
-            MENU_WIDTH,
-            MENU_HEIGHT
-        )
+    return function()
+        return Value
     end
 end
 
-if workspace.CurrentCamera then
-    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
-end
+--// VISUAL
+local Visual = Pages.Visual
 
-UpdateScale()
-
---==================================================
--- START UI FIRST
---==================================================
-
-SelectCategory("Visual")
-
-Main.Visible = true
-GUI.Enabled = true
-Settings.MenuVisible = true
-
-print("[Rusted Compact v2.1] UI loaded")
-
---==================================================
--- PART 2 WILL START HERE
---==================================================
-
---==================================================
--- RUSTED COMPACT v2.1
--- PART 2 / 2
--- FEATURES
---==================================================
-
---==================================================
--- SERVICES
---==================================================
-
-local Camera = workspace.CurrentCamera
-
---==================================================
--- FEATURE FOLDERS
---==================================================
-
-local ESPFolder = Instance.new("Folder")
-ESPFolder.Name = "ESP"
-ESPFolder.Parent = GUI
-
-local MiscFolder = Instance.new("Folder")
-MiscFolder.Name = "Misc"
-MiscFolder.Parent = GUI
-
---==================================================
--- ESP STORAGE
---==================================================
-
-local ESPObjects = {}
-
-local function ClearESP(player)
-    local data = ESPObjects[player]
-
-    if not data then
-        return
+Toggle(
+    Visual,
+    "ESP",
+    Settings.ESP,
+    function(v)
+        Settings.ESP = v
     end
+)
 
-    for _, object in pairs(data) do
-        pcall(function()
-            object:Destroy()
-        end)
+Toggle(
+    Visual,
+    "Box ESP",
+    Settings.BoxESP,
+    function(v)
+        Settings.BoxESP = v
     end
+)
 
-    ESPObjects[player] = nil
-end
-
-local function CreateESP(player)
-    if player == LocalPlayer then
-        return
+Toggle(
+    Visual,
+    "Name ESP",
+    Settings.NameESP,
+    function(v)
+        Settings.NameESP = v
     end
+)
 
-    if ESPObjects[player] then
-        return
+Toggle(
+    Visual,
+    "Distance ESP",
+    Settings.DistanceESP,
+    function(v)
+        Settings.DistanceESP = v
     end
+)
 
-    local box = New("Frame", {
-        BackgroundTransparency = 1,
-        BorderSizePixel = 1,
-        BorderColor3 = Colors.Purple,
-        Visible = false
-    }, ESPFolder)
-
-    local name = New("TextLabel", {
-        BackgroundTransparency = 1,
-        TextColor3 = Colors.White,
-        TextStrokeTransparency = 0.4,
-        TextSize = 13,
-        Font = Enum.Font.GothamBold,
-        Visible = false
-    }, ESPFolder)
-
-    local distance = New("TextLabel", {
-        BackgroundTransparency = 1,
-        TextColor3 = Colors.Gray,
-        TextStrokeTransparency = 0.5,
-        TextSize = 11,
-        Font = Enum.Font.Gotham,
-        Visible = false
-    }, ESPFolder)
-
-    local healthBack = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(35, 35, 35),
-        BorderSizePixel = 0,
-        Visible = false
-    }, ESPFolder)
-
-    local health = New("Frame", {
-        BackgroundColor3 = Colors.Green,
-        BorderSizePixel = 0,
-        Visible = false
-    }, healthBack)
-
-    local tracer = New("Frame", {
-        BackgroundColor3 = Colors.Purple,
-        BorderSizePixel = 0,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Visible = false
-    }, ESPFolder)
-
-    ESPObjects[player] = {
-        Box = box,
-        Name = name,
-        Distance = distance,
-        HealthBack = healthBack,
-        Health = health,
-        Tracer = tracer
-    }
-end
-
-local function HideESP(data)
-    if not data then
-        return
+Toggle(
+    Visual,
+    "Health ESP",
+    Settings.HealthESP,
+    function(v)
+        Settings.HealthESP = v
     end
+)
 
-    for _, object in pairs(data) do
-        if object:IsA("GuiObject") then
-            object.Visible = false
-        end
+Toggle(
+    Visual,
+    "Tracer ESP",
+    Settings.Tracer,
+    function(v)
+        Settings.Tracer = v
     end
-end
+)
 
---==================================================
--- ESP UPDATE
---==================================================
+--// COMBAT
+local Combat = Pages.Combat
 
-local function UpdateESP(player, data)
-    if not Settings.Enabled or not Settings.ESP then
-        HideESP(data)
-        return
+Toggle(
+    Combat,
+    "Aim Assist",
+    Settings.AimAssist,
+    function(v)
+        Settings.AimAssist = v
     end
+)
 
-    local character = player.Character
-
-    if not character then
-        HideESP(data)
-        return
+Toggle(
+    Combat,
+    "Team Check",
+    Settings.TeamCheck,
+    function(v)
+        Settings.TeamCheck = v
     end
+)
 
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    local root = character:FindFirstChild("HumanoidRootPart")
-
-    if not humanoid or not root or humanoid.Health <= 0 then
-        HideESP(data)
-        return
+Toggle(
+    Combat,
+    "Wall Check",
+    Settings.WallCheck,
+    function(v)
+        Settings.WallCheck = v
     end
+)
 
-    local position, visible = Camera:WorldToViewportPoint(root.Position)
+--// MOVEMENT
+local Movement = Pages.Movement
 
-    if not visible or position.Z <= 0 then
-        HideESP(data)
-        return
-    end
-
-    local distance = (Camera.CFrame.Position - root.Position).Magnitude
-
-    if distance > Settings.MaxDistance then
-        HideESP(data)
-        return
-    end
-
-    -- approximate character size
-    local scale = math.clamp(1800 / math.max(position.Z, 1), 18, 260)
-
-    local width = scale * 0.55
-    local height = scale
-
-    local x = position.X - width / 2
-    local y = position.Y - height / 2
-
-    -- BOX
-    if Settings.BoxESP then
-        data.Box.Position = UDim2.fromOffset(x, y)
-        data.Box.Size = UDim2.fromOffset(width, height)
-        data.Box.BorderSizePixel = Settings.BoxThickness
-        data.Box.Visible = true
-    else
-        data.Box.Visible = false
-    end
-
-    -- NAME
-    if Settings.NameESP then
-        data.Name.Text = player.Name
-        data.Name.Position = UDim2.fromOffset(
-            x,
-            y - 20
-        )
-        data.Name.Size = UDim2.fromOffset(
-            width,
-            18
-        )
-        data.Name.Visible = true
-    else
-        data.Name.Visible = false
-    end
-
-    -- DISTANCE
-    if Settings.DistanceESP then
-        data.Distance.Text =
-            string.format("[%dm]", math.floor(distance))
-
-        data.Distance.Position = UDim2.fromOffset(
-            x,
-            y + height + 2
-        )
-
-        data.Distance.Size = UDim2.fromOffset(
-            width,
-            18
-        )
-
-        data.Distance.Visible = true
-    else
-        data.Distance.Visible = false
-    end
-
-    -- HEALTH
-    if Settings.HealthBar and Settings.HealthESP then
-        local healthPercent =
-            math.clamp(
-                humanoid.Health / humanoid.MaxHealth,
-                0,
-                1
-            )
-
-        data.HealthBack.Position = UDim2.fromOffset(
-            x - 7,
-            y
-        )
-
-        data.HealthBack.Size = UDim2.fromOffset(
-            4,
-            height
-        )
-
-        data.HealthBack.Visible = true
-
-        data.Health.Size = UDim2.new(
-            1,
-            0,
-            healthPercent,
-            0
-        )
-
-        data.Health.Position = UDim2.new(
-            0,
-            0,
-            1 - healthPercent,
-            0
-        )
-
-        data.Health.BackgroundColor3 =
-            healthPercent > 0.6
-            and Colors.Green
-            or healthPercent > 0.3
-            and Colors.Yellow
-            or Colors.Red
-    else
-        data.HealthBack.Visible = false
-    end
-
-    -- TRACER
-    if Settings.Tracer then
-        local start = Vector2.new(
-            Camera.ViewportSize.X / 2,
-            Camera.ViewportSize.Y
-        )
-
-        local finish = Vector2.new(
-            position.X,
-            position.Y
-        )
-
-        local delta = finish - start
-        local length = delta.Magnitude
-
-        data.Tracer.Position = UDim2.fromOffset(
-            (start.X + finish.X) / 2,
-            (start.Y + finish.Y) / 2
-        )
-
-        data.Tracer.Size = UDim2.fromOffset(
-            length,
-            Settings.TracerThickness
-        )
-
-        data.Tracer.Rotation =
-            math.deg(math.atan2(delta.Y, delta.X))
-
-        data.Tracer.Visible = true
-    else
-        data.Tracer.Visible = false
-    end
-end
-
---==================================================
--- PLAYER CONNECTIONS
---==================================================
-
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        CreateESP(player)
-
-        player.CharacterRemoving:Connect(function()
-            local data = ESPObjects[player]
-
-            if data then
-                HideESP(data)
-            end
-        end)
-    end
-end
-
-Players.PlayerAdded:Connect(function(player)
-    CreateESP(player)
-
-    player.CharacterRemoving:Connect(function()
-        local data = ESPObjects[player]
-
-        if data then
-            HideESP(data)
-        end
-    end)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    ClearESP(player)
-end)
-
---==================================================
--- ESP LOOP
---==================================================
-
-RunService.RenderStepped:Connect(function()
-    Camera = workspace.CurrentCamera or Camera
-
-    for player, data in pairs(ESPObjects) do
-        if player.Parent then
-            UpdateESP(player, data)
+Toggle(
+    Movement,
+    "Speed",
+    false,
+    function(v)
+        if v then
+            Settings.WalkSpeed = 24
         else
-            ClearESP(player)
+            Settings.WalkSpeed = 16
         end
     end
-end)
+)
 
---==================================================
--- AIM ASSIST
---==================================================
-
-local function GetTarget()
-    if not Settings.AimAssist then
-        return nil
-    end
-
-    local closest
-    local closestDistance = Settings.AimFOV
-
-    local center = Vector2.new(
-        Camera.ViewportSize.X / 2,
-        Camera.ViewportSize.Y / 2
-    )
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-
-            if Settings.TeamCheck
-                and LocalPlayer.Team
-                and player.Team == LocalPlayer.Team then
-                continue
-            end
-
-            local character = player.Character
-
-            if character then
-                local humanoid =
-                    character:FindFirstChildOfClass("Humanoid")
-
-                local targetPart =
-                    character:FindFirstChild(Settings.AimTarget)
-
-                if humanoid
-                    and targetPart
-                    and humanoid.Health > 0 then
-
-                    local screen, visible =
-                        Camera:WorldToViewportPoint(
-                            targetPart.Position
-                        )
-
-                    if visible and screen.Z > 0 then
-                        local distance =
-                            (
-                                Vector2.new(
-                                    screen.X,
-                                    screen.Y
-                                ) - center
-                            ).Magnitude
-
-                        if distance < closestDistance then
-
-                            local allowed = true
-
-                            if Settings.WallCheck then
-                                local params =
-                                    RaycastParams.new()
-
-                                params.FilterType =
-                                    Enum.RaycastFilterType.Exclude
-
-                                params.FilterDescendantsInstances = {
-                                    LocalPlayer.Character,
-                                    character
-                                }
-
-                                local result =
-                                    workspace:Raycast(
-                                        Camera.CFrame.Position,
-                                        targetPart.Position
-                                            - Camera.CFrame.Position,
-                                        params
-                                    )
-
-                                if result then
-                                    allowed = false
-                                end
-                            end
-
-                            if allowed then
-                                closestDistance = distance
-                                closest = targetPart
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return closest
-end
-
-RunService.RenderStepped:Connect(function()
-    if not Settings.Enabled then
-        return
-    end
-
-    if not Settings.AimAssist then
-        return
-    end
-
-    local target = GetTarget()
-
-    if not target then
-        return
-    end
-
-    local cameraPosition = Camera.CFrame.Position
-
-    local desired =
-        CFrame.lookAt(
-            cameraPosition,
-            target.Position
-        )
-
-    Camera.CFrame =
-        Camera.CFrame:Lerp(
-            desired,
-            math.clamp(
-                Settings.AimSmoothness,
-                0.01,
-                1
-            )
-        )
-end)
-
---==================================================
--- CROSSHAIR
---==================================================
-
-local Crosshair = New("Frame", {
-    Size = UDim2.fromOffset(80, 80),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.fromScale(0.5, 0.5),
-    BackgroundTransparency = 1,
-    Visible = false
-}, MiscFolder)
-
-local CrosshairH = New("Frame", {
-    Size = UDim2.fromOffset(24, 2),
-    Position = UDim2.new(0.5, -12, 0.5, -1),
-    BackgroundColor3 = Colors.White,
-    BorderSizePixel = 0
-}, Crosshair)
-
-local CrosshairV = New("Frame", {
-    Size = UDim2.fromOffset(2, 24),
-    Position = UDim2.new(0.5, -1, 0.5, -12),
-    BackgroundColor3 = Colors.White,
-    BorderSizePixel = 0
-}, Crosshair)
-
---==================================================
--- CROSSHAIR UPDATE
---==================================================
-
-RunService.RenderStepped:Connect(function()
-    Crosshair.Visible =
-        Settings.Enabled
-        and Settings.Crosshair
-end)
-
---==================================================
--- MOVEMENT
---==================================================
-
-local function ApplyMovement()
-    local character = LocalPlayer.Character
-
-    if not character then
-        return
-    end
-
-    local humanoid =
-        character:FindFirstChildOfClass("Humanoid")
-
-    if not humanoid then
-        return
-    end
-
-    if Settings.Enabled then
-        humanoid.WalkSpeed = Settings.WalkSpeed
-        humanoid.JumpPower = Settings.JumpPower
-    else
-        humanoid.WalkSpeed = 16
-        humanoid.JumpPower = 50
-    end
-end
-
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    ApplyMovement()
-end)
-
-RunService.Heartbeat:Connect(function()
-    if Settings.Enabled then
-        ApplyMovement()
-    end
-end)
-
---==================================================
--- MENU HOTKEY
---==================================================
-
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then
-        return
-    end
-
-    if input.KeyCode == Enum.KeyCode.RightShift then
-
-        if Main.Visible then
-            Main.Visible = false
-            OpenButton.Visible = true
-            Settings.MenuVisible = false
+Toggle(
+    Movement,
+    "High Jump",
+    false,
+    function(v)
+        if v then
+            Settings.JumpPower = 75
         else
-            Main.Visible = true
-            OpenButton.Visible = false
-            Settings.MenuVisible = true
+            Settings.JumpPower = 50
         end
     end
-end)
+)
 
---==================================================
--- SAFE CLOSE
---==================================================
+--// MISC
+local Misc = Pages.Misc
 
-CloseButton.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    OpenButton.Visible = true
-    Settings.MenuVisible = false
-end)
+Toggle(
+    Misc,
+    "Crosshair",
+    Settings.Crosshair,
+    function(v)
+        Settings.Crosshair = v
+    end
+)
 
---==================================================
--- MINIMIZE
---==================================================
+--// SETTINGS
+local SetPage = Pages.Settings
 
-MinButton.MouseButton1Click:Connect(function()
+Toggle(
+    SetPage,
+    "Enable ESP",
+    Settings.ESP,
+    function(v)
+        Settings.ESP = v
+    end
+)
+
+print("[Rusted] Part 3 loaded")
+
+--// RUSTED HUB v2.2
+--// PART 4/4 - FINAL
+
+--// Minimize
+local Minimized = false
+
+Min.MouseButton1Click:Connect(function()
+
+    Minimized = not Minimized
 
     if Minimized then
-        Main.Size = UDim2.fromOffset(
-            MENU_WIDTH,
-            MENU_HEIGHT
-        )
-
-        Sidebar.Visible = true
-        Content.Visible = true
-
-        Minimized = false
-    else
-        Main.Size = UDim2.fromOffset(
-            MENU_WIDTH,
-            62
-        )
-
+        Min.Text = "+"
         Sidebar.Visible = false
         Content.Visible = false
 
-        Minimized = true
-    end
-end)
+        Tween(Main,{
+            Size = UDim2.fromOffset(900,82)
+        },.2)
 
---==================================================
--- DRAGGING
---==================================================
+    else
+        Min.Text = "−"
 
-local Dragging = false
-local DragStart
-local StartPosition
+        Tween(Main,{
+            Size = UDim2.fromOffset(900,560)
+        },.2)
 
-TopBar.InputBegan:Connect(function(input)
-
-    if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
-        Dragging = true
-        DragStart = input.Position
-        StartPosition = Main.Position
-
-        input.Changed:Connect(function()
-
-            if input.UserInputState ==
-                Enum.UserInputState.End then
-
-                Dragging = false
-            end
+        task.delay(.12,function()
+            Sidebar.Visible = true
+            Content.Visible = true
         end)
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
+--// Close
+Close.MouseButton1Click:Connect(function()
 
-    if not Dragging then
-        return
-    end
+    Tween(Main,{
+        BackgroundTransparency = 1
+    },.15)
 
-    if input.UserInputType ==
-        Enum.UserInputType.MouseMovement
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
+    task.wait(.16)
 
-        local Delta =
-            input.Position - DragStart
-
-        Main.Position = UDim2.new(
-            StartPosition.X.Scale,
-            StartPosition.X.Offset + Delta.X,
-            StartPosition.Y.Scale,
-            StartPosition.Y.Offset + Delta.Y
-        )
-    end
+    GUI.Enabled = false
 end)
 
---==================================================
--- BUTTON EFFECTS
---==================================================
+--// Drag system
+local Dragging = false
+local DragStart
+local StartPos
 
-MinButton.MouseEnter:Connect(function()
-    Tween(MinButton, 0.12, {
-        TextColor3 = Colors.PurpleLight
-    })
-end)
+local function UpdateDrag(input)
 
-MinButton.MouseLeave:Connect(function()
-    Tween(MinButton, 0.12, {
-        TextColor3 = Colors.White
-    })
-end)
+    local Delta = input.Position - DragStart
 
-CloseButton.MouseEnter:Connect(function()
-    Tween(CloseButton, 0.12, {
-        TextColor3 = Colors.Red
-    })
-end)
-
-CloseButton.MouseLeave:Connect(function()
-    Tween(CloseButton, 0.12, {
-        TextColor3 = Colors.White
-    })
-end)
-
---==================================================
--- SETTINGS SYNC
---==================================================
-
-local function RefreshMovement()
-    ApplyMovement()
+    Main.Position = UDim2.new(
+        StartPos.X.Scale,
+        StartPos.X.Offset + Delta.X,
+        StartPos.Y.Scale,
+        StartPos.Y.Offset + Delta.Y
+    )
 end
 
-task.spawn(function()
-    while task.wait(1) do
-        if Settings.Enabled then
-            RefreshMovement()
-        end
+Top.InputBegan:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        Dragging = true
+        DragStart = input.Position
+        StartPos = Main.Position
+
+        input.Changed:Connect(function()
+
+            if input.UserInputState == Enum.UserInputState.End then
+                Dragging = false
+            end
+
+        end)
     end
 end)
 
---==================================================
--- FINAL INIT
---==================================================
+Top.InputChanged:Connect(function(input)
 
-Main.Visible = true
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        UIS.InputChanged:Connect(function(move)
+
+            if Dragging and move == input then
+                UpdateDrag(move)
+            end
+
+        end)
+    end
+end)
+
+--// Character settings
+local function ApplyCharacter()
+
+    local Character = Player.Character
+    if not Character then return end
+
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if not Humanoid then return end
+
+    Humanoid.WalkSpeed = Settings.WalkSpeed
+    Humanoid.JumpPower = Settings.JumpPower
+end
+
+Player.CharacterAdded:Connect(function()
+
+    task.wait(1)
+    ApplyCharacter()
+
+end)
+
+--// Apply movement every short interval
+task.spawn(function()
+
+    while GUI.Parent do
+
+        if Settings.WalkSpeed ~= 16
+        or Settings.JumpPower ~= 50 then
+
+            ApplyCharacter()
+        end
+
+        task.wait(.25)
+    end
+
+end)
+
+--// Hover effects
+Min.MouseEnter:Connect(function()
+    Min.TextColor3 = C.Purple2
+end)
+
+Min.MouseLeave:Connect(function()
+    Min.TextColor3 = C.White
+end)
+
+Close.MouseEnter:Connect(function()
+    Close.TextColor3 = C.Red
+end)
+
+Close.MouseLeave:Connect(function()
+    Close.TextColor3 = C.White
+end)
+
+--// Open animation
+Main.BackgroundTransparency = 1
+
+Tween(Main,{
+    BackgroundTransparency = 0
+},.3)
+
 GUI.Enabled = true
-Settings.MenuVisible = true
-
-SelectCategory("Visual")
+Main.Visible = true
 
 print("================================")
-print("Rusted Compact v2.1 loaded")
-print("UI: OK")
-print("ESP: OK")
-print("Combat: OK")
-print("Movement: OK")
-print("Misc: OK")
+print("       RUSTED HUB v2.2")
+print("       ALL PARTS LOADED")
 print("================================")
