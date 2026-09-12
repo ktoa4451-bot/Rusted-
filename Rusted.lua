@@ -1,5 +1,7 @@
 --==================================================
---              RUSTED v3.1 PART 1/4
+--                 RUSTED v3.2
+--                  PART 1A/7
+--             CORE + CONFIG + GUI
 --==================================================
 
 local Players = game:GetService("Players")
@@ -11,12 +13,25 @@ local Lighting = game:GetService("Lighting")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Удаляем старую версию
+--==================================================
+-- REMOVE OLD VERSION
+--==================================================
+
 pcall(function()
-	local old = PlayerGui:FindFirstChild("RustedV31")
-	if old then
-		old:Destroy()
+
+	for _, name in ipairs({
+		"RustedV31",
+		"RustedV32"
+	}) do
+
+		local old = PlayerGui:FindFirstChild(name)
+
+		if old then
+			old:Destroy()
+		end
+
 	end
+
 end)
 
 --==================================================
@@ -24,49 +39,107 @@ end)
 --==================================================
 
 local S = {
+
+	-- VISUAL
 	ESP = false,
+	BoxESP = false,
 	Names = false,
 	Health = false,
 	Distance = false,
-
-	SilentAim = false,
-	TeamCheck = true,
-	ShowFOV = false,
 	Snapline = false,
-	FOVRadius = 150,
+	TeamCheck = true,
 
+	-- AIM
+	AimAssist = false,
+	AimPlayers = true,
+	AimNPC = true,
+	AimVisibleOnly = true,
+	AimFOV = 150,
+
+	-- CAMERA
 	FOVChanger = false,
 	FOV = 90,
 
+	-- MOVEMENT
 	SpeedHack = false,
 	Speed = 16,
-
-	Noclip = false,
 
 	Jump = false,
 	JumpPower = 50,
 
+	Noclip = false,
+
+	-- MISC
 	Fullbright = false,
 	NeonGuns = false,
 
-	MenuColor = Color3.fromRGB(145,70,255)
+	-- CUSTOM HANDS
+	CustomHands = false,
+	HandsX = 0,
+	HandsY = 0,
+	HandsZ = 0,
+
+	-- MENU
+	MenuAnimations = true,
+
+	MenuColor = Color3.fromRGB(
+		145,
+		70,
+		255
+	)
 }
 
+--==================================================
+-- COLORS
+--==================================================
+
 local COLORS = {
-	BG = Color3.fromRGB(7,5,14),
-	PANEL = Color3.fromRGB(12,9,22),
-	ROW = Color3.fromRGB(20,15,34),
-	HOVER = Color3.fromRGB(34,23,55),
 
-	TEXT = Color3.fromRGB(245,242,255),
-	SUB = Color3.fromRGB(145,137,165),
-	DARK = Color3.fromRGB(80,70,100),
+	BG = Color3.fromRGB(
+		7,5,14
+	),
 
-	PURPLE = Color3.fromRGB(145,70,255),
-	WHITE = Color3.fromRGB(255,255,255),
-	RED = Color3.fromRGB(255,65,85),
-	GREEN = Color3.fromRGB(65,220,125),
-	BLUE = Color3.fromRGB(70,135,255)
+	PANEL = Color3.fromRGB(
+		12,9,22
+	),
+
+	ROW = Color3.fromRGB(
+		20,15,34
+	),
+
+	HOVER = Color3.fromRGB(
+		34,23,55
+	),
+
+	TEXT = Color3.fromRGB(
+		245,242,255
+	),
+
+	SUB = Color3.fromRGB(
+		145,137,165
+	),
+
+	DARK = Color3.fromRGB(
+		80,70,100
+	),
+
+	PURPLE = S.MenuColor,
+
+	WHITE = Color3.fromRGB(
+		255,255,255
+	),
+
+	RED = Color3.fromRGB(
+		255,65,85
+	),
+
+	GREEN = Color3.fromRGB(
+		65,220,125
+	),
+
+	BLUE = Color3.fromRGB(
+		70,135,255
+	)
 }
 
 --==================================================
@@ -74,45 +147,94 @@ local COLORS = {
 --==================================================
 
 local function New(class, props, parent)
-	local obj = Instance.new(class)
 
-	for property, value in pairs(props or {}) do
-		obj[property] = value
+	local object = Instance.new(class)
+
+	for property, value in pairs(
+		props or {}
+	) do
+
+		object[property] = value
+
 	end
 
-	obj.Parent = parent
-	return obj
+	object.Parent = parent
+
+	return object
 end
 
-local function Corner(obj, radius)
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, radius or 8)
-	corner.Parent = obj
+local function Corner(object, radius)
+
+	local corner =
+		Instance.new("UICorner")
+
+	corner.CornerRadius =
+		UDim.new(
+			0,
+			radius or 8
+		)
+
+	corner.Parent = object
+
 	return corner
 end
 
-local function Stroke(obj, color, thickness, transparency)
-	local stroke = Instance.new("UIStroke")
+local function Stroke(
+	object,
+	color,
+	thickness,
+	transparency
+)
 
-	stroke.Color = color or COLORS.PURPLE
-	stroke.Thickness = thickness or 1
-	stroke.Transparency = transparency or 0
+	local stroke =
+		Instance.new("UIStroke")
 
-	stroke.Parent = obj
+	stroke.Color =
+		color or COLORS.PURPLE
+
+	stroke.Thickness =
+		thickness or 1
+
+	stroke.Transparency =
+		transparency or 0
+
+	stroke.ApplyStrokeMode =
+		Enum.ApplyStrokeMode.Border
+
+	stroke.Parent = object
 
 	return stroke
 end
 
-local function Tween(obj, time, style, direction, properties)
-	local tween = TweenService:Create(
-		obj,
-		TweenInfo.new(
-			time,
-			style or Enum.EasingStyle.Quart,
-			direction or Enum.EasingDirection.Out
-		),
-		properties
-	)
+local function Tween(
+	object,
+	time,
+	style,
+	direction,
+	properties
+)
+
+	if not object
+		or not object.Parent then
+
+		return
+
+	end
+
+	local tween =
+		TweenService:Create(
+
+			object,
+
+			TweenInfo.new(
+				time,
+				style or Enum.EasingStyle.Quart,
+				direction or Enum.EasingDirection.Out
+			),
+
+			properties
+
+		)
 
 	tween:Play()
 
@@ -120,1013 +242,2208 @@ local function Tween(obj, time, style, direction, properties)
 end
 
 local function GetCharacter()
+
 	return Player.Character
+
 end
 
 local function GetHumanoid()
-	local character = GetCharacter()
+
+	local character =
+		GetCharacter()
 
 	if not character then
 		return nil
 	end
 
-	return character:FindFirstChildOfClass("Humanoid")
+	return character:
+		FindFirstChildOfClass(
+			"Humanoid"
+		)
+end
+
+local function GetRoot(character)
+
+	if not character then
+		return nil
+	end
+
+	return character:
+		FindFirstChild(
+			"HumanoidRootPart"
+		)
 end
 
 --==================================================
 -- SCREEN GUI
 --==================================================
 
-local Gui = New("ScreenGui", {
-	Name = "RustedV31",
-	ResetOnSpawn = false,
-	IgnoreGuiInset = true,
-	ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-}, PlayerGui)
+local Gui =
+	New(
+		"ScreenGui",
+		{
+
+			Name =
+				"RustedV32",
+
+			ResetOnSpawn =
+				false,
+
+			IgnoreGuiInset =
+				true,
+
+			ZIndexBehavior =
+				Enum.ZIndexBehavior.Sibling,
+
+			DisplayOrder =
+				999
+
+		},
+		PlayerGui
+	)
 
 --==================================================
 -- MAIN WINDOW
 --==================================================
 
-local Main = New("Frame", {
-	Name = "Main",
+local Main =
+	New(
+		"Frame",
+		{
 
-	AnchorPoint = Vector2.new(.5,.5),
-	Position = UDim2.fromScale(.5,.5),
+			Name =
+				"Main",
 
-	Size = UDim2.fromOffset(580,350),
+			AnchorPoint =
+				Vector2.new(
+					.5,
+					.5
+				),
 
-	BackgroundColor3 = COLORS.BG,
-	BackgroundTransparency = 0,
+			Position =
+				UDim2.fromScale(
+					.5,
+					.5
+				),
 
-	BorderSizePixel = 0,
+			Size =
+				UDim2.fromOffset(
+					500,
+					300
+				),
 
-	ClipsDescendants = true,
+			BackgroundColor3 =
+				COLORS.BG,
 
-	ZIndex = 10
-}, Gui)
+			BackgroundTransparency =
+				0,
 
-Corner(Main,16)
+			BorderSizePixel =
+				0,
 
-local MainStroke = Stroke(
+			ClipsDescendants =
+				true,
+
+			Active =
+				true,
+
+			ZIndex =
+				10
+
+		},
+		Gui
+	)
+
+Corner(
 	Main,
-	COLORS.PURPLE,
-	1.5,
-	.15
+	14
 )
 
+local MainStroke =
+	Stroke(
+		Main,
+		COLORS.PURPLE,
+		1.5,
+		.15
+	)
+
 --==================================================
--- MOBILE / PC SCALE
+-- SCALE
 --==================================================
 
-local Scale = Instance.new("UIScale")
-Scale.Scale = 1
-Scale.Parent = Main
+local MainScale =
+	Instance.new(
+		"UIScale"
+	)
+
+MainScale.Scale =
+	1
+
+MainScale.Parent =
+	Main
 
 local function UpdateScale()
 
-	local camera = workspace.CurrentCamera
+	local camera =
+		workspace.CurrentCamera
 
 	if not camera then
 		return
 	end
 
-	local width = camera.ViewportSize.X
+	local width =
+		camera.ViewportSize.X
 
-	if width < 420 then
-		Scale.Scale = .62
-	elseif width < 600 then
-		Scale.Scale = .76
-	elseif width < 800 then
-		Scale.Scale = .88
+	if width <= 360 then
+
+		MainScale.Scale =
+			.60
+
+	elseif width <= 480 then
+
+		MainScale.Scale =
+			.72
+
+	elseif width <= 650 then
+
+		MainScale.Scale =
+			.85
+
 	else
-		Scale.Scale = 1
+
+		MainScale.Scale =
+			1
+
 	end
+
 end
 
 UpdateScale()
 
 if workspace.CurrentCamera then
-	workspace.CurrentCamera:GetPropertyChangedSignal(
-		"ViewportSize"
-	):Connect(UpdateScale)
+
+	workspace.CurrentCamera:
+		GetPropertyChangedSignal(
+			"ViewportSize"
+		):
+		Connect(
+			UpdateScale
+		)
+
 end
 
 --==================================================
 -- TOP BAR
 --==================================================
 
-local Top = New("Frame", {
-	Name = "Top",
+local Top =
+	New(
+		"Frame",
+		{
 
-	Size = UDim2.new(1,0,0,52),
+			Name =
+				"Top",
 
-	BackgroundColor3 = COLORS.PANEL,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.new(
+					1,
+					0,
+					0,
+					48
+				),
 
-	ZIndex = 11
-}, Main)
+			BackgroundColor3 =
+				COLORS.PANEL,
 
-Corner(Top,16)
+			BorderSizePixel =
+				0,
 
--- закрываем нижнюю часть скругления
-New("Frame", {
-	Size = UDim2.new(1,0,0,14),
-	Position = UDim2.new(0,0,1,-14),
+			ClipsDescendants =
+				true,
 
-	BackgroundColor3 = COLORS.PANEL,
-	BorderSizePixel = 0,
+			ZIndex =
+				20
 
-	ZIndex = 11
-}, Top)
+		},
+		Main
+	)
+
+Corner(
+	Top,
+	14
+)
+
+New(
+	"Frame",
+	{
+
+		Size =
+			UDim2.new(
+				1,
+				0,
+				0,
+				14
+			),
+
+		Position =
+			UDim2.new(
+				0,
+				0,
+				1,
+				-14
+			),
+
+		BackgroundColor3 =
+			COLORS.PANEL,
+
+		BorderSizePixel =
+			0,
+
+		ZIndex =
+			20
+
+	},
+	Top
+)
 
 --==================================================
 -- LOGO
 --==================================================
 
-local LogoBox = New("Frame", {
-	Name = "LogoBox",
+local LogoBox =
+	New(
+		"Frame",
+		{
 
-	Size = UDim2.fromOffset(32,32),
-	Position = UDim2.fromOffset(10,10),
+			Name =
+				"LogoBox",
 
-	BackgroundColor3 = COLORS.PURPLE,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.fromOffset(
+					30,
+					30
+				),
 
-	ZIndex = 14
-}, Top)
+			Position =
+				UDim2.fromOffset(
+					9,
+					9
+				),
 
-Corner(LogoBox,9)
+			BackgroundColor3 =
+				COLORS.PURPLE,
 
-local LogoStroke = Stroke(
+			BorderSizePixel =
+				0,
+
+			ZIndex =
+				25
+
+		},
+		Top
+	)
+
+Corner(
 	LogoBox,
-	COLORS.WHITE,
-	1,
-	.65
+	9
 )
 
-local Logo = New("TextLabel", {
-	Size = UDim2.fromScale(1,1),
+local LogoStroke =
+	Stroke(
+		LogoBox,
+		COLORS.WHITE,
+		1,
+		.6
+	)
 
-	BackgroundTransparency = 1,
+New(
+	"TextLabel",
+	{
 
-	Text = "R",
-	TextColor3 = COLORS.WHITE,
+		Size =
+			UDim2.fromScale(
+				1,
+				1
+			),
 
-	Font = Enum.Font.GothamBlack,
-	TextSize = 20,
+		BackgroundTransparency =
+			1,
 
-	ZIndex = 15
-}, LogoBox)
+		Text =
+			"R",
+
+		TextColor3 =
+			COLORS.WHITE,
+
+		Font =
+			Enum.Font.GothamBlack,
+
+		TextSize =
+			19,
+
+		ZIndex =
+			26
+
+	},
+	LogoBox
+)
 
 --==================================================
 -- TITLE
 --==================================================
 
-local Title = New("TextLabel", {
-	Size = UDim2.fromOffset(180,22),
-	Position = UDim2.fromOffset(52,6),
+local Title =
+	New(
+		"TextLabel",
+		{
 
-	BackgroundTransparency = 1,
+			Size =
+				UDim2.fromOffset(
+					160,
+					20
+				),
 
-	Text = "RUSTED",
-	TextColor3 = COLORS.TEXT,
+			Position =
+				UDim2.fromOffset(
+					47,
+					5
+				),
 
-	Font = Enum.Font.GothamBlack,
-	TextSize = 17,
+			BackgroundTransparency =
+				1,
 
-	TextXAlignment = Enum.TextXAlignment.Left,
+			Text =
+				"RUSTED",
 
-	ZIndex = 13
-}, Top)
+			TextColor3 =
+				COLORS.TEXT,
 
-local Version = New("TextLabel", {
-	Size = UDim2.fromOffset(100,15),
-	Position = UDim2.fromOffset(53,28),
+			Font =
+				Enum.Font.GothamBlack,
 
-	BackgroundTransparency = 1,
+			TextSize =
+				15,
 
-	Text = "v3.1",
+			TextXAlignment =
+				Enum.TextXAlignment.Left,
 
-	TextColor3 = COLORS.SUB,
+			ZIndex =
+				23
 
-	Font = Enum.Font.GothamMedium,
-	TextSize = 8,
+		},
+		Top
+	)
 
-	TextXAlignment = Enum.TextXAlignment.Left,
+local Version =
+	New(
+		"TextLabel",
+		{
 
-	ZIndex = 13
-}, Top)
+			Size =
+				UDim2.fromOffset(
+					100,
+					13
+				),
+
+			Position =
+				UDim2.fromOffset(
+					48,
+					25
+				),
+
+			BackgroundTransparency =
+				1,
+
+			Text =
+				"v3.2",
+
+			TextColor3 =
+				COLORS.SUB,
+
+			Font =
+				Enum.Font.GothamMedium,
+
+			TextSize =
+				7,
+
+			TextXAlignment =
+				Enum.TextXAlignment.Left,
+
+			ZIndex =
+				23
+
+		},
+		Top
+	)
 
 --==================================================
 -- MINIMIZE
 --==================================================
 
-local Minimize = New("TextButton", {
-	Name = "Minimize",
+local Minimize =
+	New(
+		"TextButton",
+		{
 
-	Size = UDim2.fromOffset(30,30),
-	Position = UDim2.new(1,-68,0,11),
+			Name =
+				"Minimize",
 
-	BackgroundColor3 = COLORS.ROW,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.fromOffset(
+					28,
+					28
+				),
 
-	Text = "—",
-	TextColor3 = COLORS.TEXT,
+			Position =
+				UDim2.new(
+					1,
+					-62,
+					0,
+					10
+				),
 
-	Font = Enum.Font.GothamBold,
-	TextSize = 15,
+			BackgroundColor3 =
+				COLORS.ROW,
 
-	AutoButtonColor = false,
+			BorderSizePixel =
+				0,
 
-	ZIndex = 16
-}, Top)
+			Text =
+				"—",
 
-Corner(Minimize,9)
+			TextColor3 =
+				COLORS.TEXT,
 
-Stroke(
+			Font =
+				Enum.Font.GothamBold,
+
+			TextSize =
+				14,
+
+			AutoButtonColor =
+				false,
+
+			ZIndex =
+				30
+
+		},
+		Top
+	)
+
+Corner(
 	Minimize,
-	COLORS.PURPLE,
-	1,
-	.45
+	8
 )
+
+local MinStroke =
+	Stroke(
+		Minimize,
+		COLORS.PURPLE,
+		1,
+		.4
+	)
 
 --==================================================
 -- CLOSE
 --==================================================
 
-local Close = New("TextButton", {
-	Name = "Close",
+local Close =
+	New(
+		"TextButton",
+		{
 
-	Size = UDim2.fromOffset(30,30),
-	Position = UDim2.new(1,-34,0,11),
+			Name =
+				"Close",
 
-	BackgroundColor3 = COLORS.ROW,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.fromOffset(
+					28,
+					28
+				),
 
-	Text = "×",
-	TextColor3 = COLORS.TEXT,
+			Position =
+				UDim2.new(
+					1,
+					-31,
+					0,
+					10
+				),
 
-	Font = Enum.Font.GothamBold,
-	TextSize = 17,
+			BackgroundColor3 =
+				COLORS.ROW,
 
-	AutoButtonColor = false,
+			BorderSizePixel =
+				0,
 
-	ZIndex = 16
-}, Top)
+			Text =
+				"×",
 
-Corner(Close,9)
+			TextColor3 =
+				COLORS.TEXT,
 
-Stroke(
+			Font =
+				Enum.Font.GothamBold,
+
+			TextSize =
+				17,
+
+			AutoButtonColor =
+				false,
+
+			ZIndex =
+				30
+
+		},
+		Top
+	)
+
+Corner(
 	Close,
-	COLORS.PURPLE,
-	1,
-	.45
+	8
 )
+
+local CloseStroke =
+	Stroke(
+		Close,
+		COLORS.PURPLE,
+		1,
+		.4
+	)
+
+--==================================================
+-- END PART 1A
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 1B/7
+--              GUI CONTENT + DRAG
+--==================================================
 
 --==================================================
 -- BODY
 --==================================================
 
-local Body = New("Frame", {
-	Name = "Body",
+local Body =
+	New(
+		"Frame",
+		{
 
-	Size = UDim2.new(1,0,1,-52),
-	Position = UDim2.fromOffset(0,52),
+			Name =
+				"Body",
 
-	BackgroundColor3 = COLORS.BG,
-	BorderSizePixel = 0,
+			Position =
+				UDim2.fromOffset(
+					0,
+					48
+				),
 
-	ZIndex = 10
-}, Main)
+			Size =
+				UDim2.new(
+					1,
+					0,
+					1,
+					-48
+				),
+
+			BackgroundColor3 =
+				COLORS.BG,
+
+			BorderSizePixel =
+				0,
+
+			ClipsDescendants =
+				true,
+
+			ZIndex =
+				11
+
+		},
+		Main
+	)
 
 --==================================================
 -- SIDEBAR
 --==================================================
 
-local Sidebar = New("Frame", {
-	Name = "Sidebar",
+local Sidebar =
+	New(
+		"Frame",
+		{
 
-	Size = UDim2.new(0,125,1,0),
+			Name =
+				"Sidebar",
 
-	BackgroundColor3 = COLORS.PANEL,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.fromOffset(
+					135,
+					252
+				),
 
-	ZIndex = 11
-}, Body)
+			Position =
+				UDim2.fromOffset(
+					8,
+					8
+				),
 
-local MenuLabel = New("TextLabel", {
-	Size = UDim2.new(1,-20,0,18),
-	Position = UDim2.fromOffset(10,10),
+			BackgroundColor3 =
+				COLORS.PANEL,
 
-	BackgroundTransparency = 1,
+			BorderSizePixel =
+				0,
 
-	Text = "MENU",
+			ClipsDescendants =
+				true,
 
-	TextColor3 = COLORS.DARK,
+			ZIndex =
+				15
 
-	Font = Enum.Font.GothamBold,
-	TextSize = 8,
+		},
+		Body
+	)
 
-	TextXAlignment = Enum.TextXAlignment.Left,
+Corner(
+	Sidebar,
+	10
+)
 
-	ZIndex = 12
-}, Sidebar)
+Stroke(
+	Sidebar,
+	COLORS.PURPLE,
+	1,
+	.75
+)
 
 --==================================================
--- NAV
+-- CATEGORY TITLE
 --==================================================
 
-local Nav = New("Frame", {
-	Name = "Nav",
+local CategoryTitle =
+	New(
+		"TextLabel",
+		{
 
-	Size = UDim2.new(1,-12,1,-38),
-	Position = UDim2.fromOffset(6,34),
+			Name =
+				"CategoryTitle",
 
-	BackgroundTransparency = 1,
+			Size =
+				UDim2.new(
+					1,
+					-20,
+					0,
+					25
+				),
 
-	ZIndex = 12
-}, Sidebar)
+			Position =
+				UDim2.fromOffset(
+					10,
+					8
+				),
 
-New("UIListLayout", {
-	Padding = UDim.new(0,4),
-	SortOrder = Enum.SortOrder.LayoutOrder
-}, Nav)
+			BackgroundTransparency =
+				1,
+
+			Text =
+				"CATEGORIES",
+
+			TextColor3 =
+				COLORS.SUB,
+
+			Font =
+				Enum.Font.GothamBold,
+
+			TextSize =
+				9,
+
+			TextXAlignment =
+				Enum.TextXAlignment.Left,
+
+			ZIndex =
+				18
+
+		},
+		Sidebar
+	)
+
+--==================================================
+-- CATEGORY LIST
+--==================================================
+
+local CategoryList =
+	New(
+		"Frame",
+		{
+
+			Name =
+				"CategoryList",
+
+			Size =
+				UDim2.new(
+					1,
+					-12,
+					1,
+					-42
+				),
+
+			Position =
+				UDim2.fromOffset(
+					6,
+					34
+				),
+
+			BackgroundTransparency =
+				1,
+
+			BorderSizePixel =
+				0,
+
+			ZIndex =
+				18
+
+		},
+		Sidebar
+	)
+
+local CategoryLayout =
+	New(
+		"UIListLayout",
+		{
+
+			FillDirection =
+				Enum.FillDirection.Vertical,
+
+			HorizontalAlignment =
+				Enum.HorizontalAlignment.Center,
+
+			VerticalAlignment =
+					Enum.VerticalAlignment.Top,
+
+			Padding =
+				UDim.new(
+					0,
+					5
+				)
+
+		},
+		CategoryList
+	)
 
 --==================================================
 -- CONTENT
 --==================================================
 
-local Content = New("Frame", {
-	Name = "Content",
+local Content =
+	New(
+		"Frame",
+		{
 
-	Size = UDim2.new(1,-125,1,0),
-	Position = UDim2.fromOffset(125,0),
+			Name =
+				"Content",
 
-	BackgroundColor3 = COLORS.BG,
-	BorderSizePixel = 0,
+			Size =
+				UDim2.new(
+					1,
+					-151,
+					1,
+					-16
+				),
 
-	ClipsDescendants = true,
+			Position =
+				UDim2.fromOffset(
+					143,
+					8
+				),
 
-	ZIndex = 11
-}, Body)
+			BackgroundColor3 =
+				COLORS.PANEL,
 
---==================================================
--- HEADER
---==================================================
+			BorderSizePixel =
+				0,
 
-local Header = New("Frame", {
-	Size = UDim2.new(1,-24,0,48),
-	Position = UDim2.fromOffset(12,0),
+			ClipsDescendants =
+				true,
 
-	BackgroundTransparency = 1,
+			ZIndex =
+				15
 
-	ZIndex = 12
-}, Content)
+		},
+		Body
+	)
 
-local PageTitle = New("TextLabel", {
-	Size = UDim2.new(1,0,0,22),
-	Position = UDim2.fromOffset(0,7),
+Corner(
+	Content,
+	10
+)
 
-	BackgroundTransparency = 1,
-
-	Text = "Visual",
-
-	TextColor3 = COLORS.TEXT,
-
-	Font = Enum.Font.GothamBlack,
-	TextSize = 16,
-
-	TextXAlignment = Enum.TextXAlignment.Left,
-
-	ZIndex = 13
-}, Header)
-
-local PageDesc = New("TextLabel", {
-	Size = UDim2.new(1,0,0,14),
-	Position = UDim2.fromOffset(0,29),
-
-	BackgroundTransparency = 1,
-
-	Text = "Player visuals and camera",
-
-	TextColor3 = COLORS.SUB,
-
-	Font = Enum.Font.Gotham,
-	TextSize = 8,
-
-	TextXAlignment = Enum.TextXAlignment.Left,
-
-	ZIndex = 13
-}, Header)
+Stroke(
+	Content,
+	COLORS.PURPLE,
+	1,
+	.75
+)
 
 --==================================================
--- PAGES
+-- CONTENT HEADER
+--==================================================
+
+local ContentTitle =
+	New(
+		"TextLabel",
+		{
+
+			Name =
+				"ContentTitle",
+
+			Size =
+				UDim2.new(
+					1,
+					-20,
+					0,
+					28
+				),
+
+			Position =
+				UDim2.fromOffset(
+					10,
+					7
+				),
+
+			BackgroundTransparency =
+				1,
+
+			Text =
+				"COMBAT",
+
+			TextColor3 =
+				COLORS.TEXT,
+
+			Font =
+				Enum.Font.GothamBold,
+
+			TextSize =
+				12,
+
+			TextXAlignment =
+				Enum.TextXAlignment.Left,
+
+			ZIndex =
+				18
+
+		},
+		Content
+	)
+
+local ContentLine =
+	New(
+		"Frame",
+		{
+
+			Name =
+				"ContentLine",
+
+			Size =
+				UDim2.new(
+					1,
+					-20,
+					0,
+					1
+				),
+
+			Position =
+				UDim2.fromOffset(
+					10,
+					36
+				),
+
+			BackgroundColor3 =
+				COLORS.PURPLE,
+
+			BackgroundTransparency =
+				.55,
+
+			BorderSizePixel =
+				0,
+
+			ZIndex =
+				18
+
+		},
+		Content
+	)
+
+--==================================================
+-- PAGE CONTAINER
+--==================================================
+
+local Page =
+	New(
+		"ScrollingFrame",
+		{
+
+			Name =
+				"Page",
+
+			Size =
+				UDim2.new(
+					1,
+					-16,
+					1,
+					-48
+				),
+
+			Position =
+				UDim2.fromOffset(
+					8,
+					44
+				),
+
+			BackgroundTransparency =
+				1,
+
+			BorderSizePixel =
+				0,
+
+			ScrollBarThickness =
+				3,
+
+			ScrollBarImageColor3 =
+				COLORS.PURPLE,
+
+			ScrollBarImageTransparency =
+				.25,
+
+			CanvasSize =
+				UDim2.new(
+					0,
+					0,
+					0,
+					0
+				),
+
+			AutomaticCanvasSize =
+				Enum.AutomaticSize.Y,
+
+			ClipsDescendants =
+				true,
+
+			ZIndex =
+				17
+
+		},
+		Content
+	)
+
+local PagePadding =
+	New(
+		"UIPadding",
+		{
+
+			PaddingTop =
+				UDim.new(
+					0,
+					2
+				),
+
+			PaddingBottom =
+				UDim.new(
+					0,
+					8
+				),
+
+			PaddingLeft =
+				UDim.new(
+					0,
+					2
+				),
+
+			PaddingRight =
+				UDim.new(
+					0,
+					5
+				)
+
+		},
+		Page
+	)
+
+local PageLayout =
+	New(
+		"UIListLayout",
+		{
+
+			FillDirection =
+				Enum.FillDirection.Vertical,
+
+			HorizontalAlignment =
+				Enum.HorizontalAlignment.Center,
+
+			VerticalAlignment =
+				Enum.VerticalAlignment.Top,
+
+			Padding =
+				UDim.new(
+					0,
+					6
+				)
+
+		},
+		Page
+	)
+
+--==================================================
+-- CATEGORY BUTTON CREATOR
+--==================================================
+
+local Categories = {}
+
+local function CreateCategory(
+	name
+)
+
+	local Button =
+		New(
+			"TextButton",
+			{
+
+				Name =
+					name,
+
+				Size =
+					UDim2.new(
+						1,
+						-4,
+						0,
+						34
+					),
+
+				BackgroundColor3 =
+					COLORS.ROW,
+
+				BorderSizePixel =
+					0,
+
+				AutoButtonColor =
+					false,
+
+				Text =
+					name,
+
+				TextColor3 =
+					COLORS.SUB,
+
+				Font =
+					Enum.Font.GothamMedium,
+
+				TextSize =
+					10,
+
+				TextXAlignment =
+					Enum.TextXAlignment.Left,
+
+				ZIndex =
+					20
+
+			},
+			CategoryList
+		)
+
+	Corner(
+		Button,
+		8
+	)
+
+	local Padding =
+		New(
+			"UIPadding",
+			{
+
+				PaddingLeft =
+					UDim.new(
+						0,
+						10
+					)
+
+			},
+			Button
+		)
+
+	local ButtonStroke =
+		Stroke(
+			Button,
+			COLORS.PURPLE,
+			1,
+			1
+		)
+
+	Categories[name] = {
+		Button = Button,
+		Stroke = ButtonStroke
+	}
+
+	return Button
+end
+
+--==================================================
+-- CATEGORIES
+--==================================================
+
+local CombatButton =
+	CreateCategory(
+		"Combat"
+	)
+
+local VisualsButton =
+	CreateCategory(
+		"Visuals"
+	)
+
+local MovementButton =
+	CreateCategory(
+		"Movement"
+	)
+
+local MiscButton =
+	CreateCategory(
+		"Misc"
+	)
+
+local SettingsButton =
+	CreateCategory(
+		"Settings"
+	)
+
+--==================================================
+-- PAGE FUNCTIONS
 --==================================================
 
 local Pages = {}
 
-local function MakePage(name)
+local function CreatePage(
+	name
+)
 
-	local page = New("ScrollingFrame", {
-		Name = name,
+	local Frame =
+		New(
+			"Frame",
+			{
 
-		Size = UDim2.new(1,-24,1,-54),
-		Position = UDim2.fromOffset(12,50),
+				Name =
+					name,
 
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
+				Size =
+					UDim2.new(
+						1,
+						0,
+						0,
+						0
+					),
 
-		ScrollBarThickness = 2,
-		ScrollBarImageColor3 = COLORS.PURPLE,
+				AutomaticSize =
+					Enum.AutomaticSize.Y,
 
-		CanvasSize = UDim2.new(0,0,0,0),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+				BackgroundTransparency =
+					1,
 
-		Visible = false,
+				BorderSizePixel =
+					0,
 
-		ZIndex = 12
-	}, Content)
+				Visible =
+					false,
 
-	New("UIListLayout", {
-		Padding = UDim.new(0,5),
-		SortOrder = Enum.SortOrder.LayoutOrder
-	}, page)
+				ZIndex =
+					18
 
-	New("UIPadding", {
-		PaddingBottom = UDim.new(0,8)
-	}, page)
+			},
+			Page
+		)
 
-	Pages[name] = page
+	local Layout =
+		New(
+			"UIListLayout",
+			{
 
-	return page
+				FillDirection =
+					Enum.FillDirection.Vertical,
+
+				HorizontalAlignment =
+					Enum.HorizontalAlignment.Center,
+
+				VerticalAlignment =
+					Enum.VerticalAlignment.Top,
+
+				Padding =
+					UDim.new(
+						0,
+						6
+					)
+
+			},
+			Frame
+		)
+
+	Pages[name] = Frame
+
+	return Frame
 end
 
-local VisualPage = MakePage("Visual")
-local CombatPage = MakePage("Combat")
-local MovementPage = MakePage("Movement")
-local MiscPage = MakePage("Misc")
-local SettingsPage = MakePage("Settings")
-
 --==================================================
--- NAV BUTTON
+-- PAGE CREATOR
 --==================================================
 
-local NavButtons = {}
+local CombatPage =
+	CreatePage(
+		"CombatPage"
+	)
 
-local function CreateNavButton(name, icon, order)
+local VisualsPage =
+	CreatePage(
+		"VisualsPage"
+	)
 
-	local button = New("TextButton", {
-		Size = UDim2.new(1,0,0,32),
+local MovementPage =
+	CreatePage(
+		"MovementPage"
+	)
 
-		BackgroundColor3 = COLORS.PANEL,
-		BorderSizePixel = 0,
+local MiscPage =
+	CreatePage(
+		"MiscPage"
+	)
 
-		Text = "",
-		AutoButtonColor = false,
+local SettingsPage =
+	CreatePage(
+		"SettingsPage"
+	)
 
-		LayoutOrder = order,
+--==================================================
+-- ROW CREATOR
+--==================================================
 
-		ZIndex = 13
-	}, Nav)
+local function CreateRow(
+	parent,
+	title,
+	description
+)
 
-	Corner(button,8)
+	local Row =
+		New(
+			"Frame",
+			{
 
-	local accent = New("Frame", {
-		Size = UDim2.new(0,3,0,18),
-		Position = UDim2.new(0,0,.5,-9),
+				Name =
+					title .. "Row",
 
-		BackgroundColor3 = COLORS.PURPLE,
-		BorderSizePixel = 0,
+				Size =
+					UDim2.new(
+						1,
+						-4,
+						0,
+						48
+					),
 
-		Visible = false,
+				BackgroundColor3 =
+					COLORS.ROW,
 
-		ZIndex = 15
-	}, button)
+				BorderSizePixel =
+					0,
 
-	Corner(accent,3)
+				ZIndex =
+					20
 
-	local iconLabel = New("TextLabel", {
-		Size = UDim2.fromOffset(25,32),
-		Position = UDim2.fromOffset(7,0),
+			},
+			parent
+		)
 
-		BackgroundTransparency = 1,
+	Corner(
+		Row,
+		8
+	)
 
-		Text = icon,
-		TextColor3 = COLORS.SUB,
+	Stroke(
+		Row,
+		COLORS.PURPLE,
+		1,
+		.9
+	)
 
-		Font = Enum.Font.GothamBold,
-		TextSize = 11,
+	local TitleLabel =
+		New(
+			"TextLabel",
+			{
 
-		ZIndex = 14
-	}, button)
+				Size =
+					UDim2.new(
+						1,
+						-75,
+						0,
+						20
+					),
 
-	local textLabel = New("TextLabel", {
-		Size = UDim2.new(1,-38,1,0),
-		Position = UDim2.fromOffset(34,0),
+				Position =
+					UDim2.fromOffset(
+						10,
+						6
+					),
 
-		BackgroundTransparency = 1,
+				BackgroundTransparency =
+					1,
 
-		Text = name,
-		TextColor3 = COLORS.SUB,
+				Text =
+					title,
 
-		Font = Enum.Font.GothamMedium,
-		TextSize = 9,
+				TextColor3 =
+					COLORS.TEXT,
 
-		TextXAlignment = Enum.TextXAlignment.Left,
+				Font =
+					Enum.Font.GothamMedium,
 
-		ZIndex = 14
-	}, button)
+				TextSize =
+					10,
 
-	NavButtons[name] = {
-		Button = button,
-		Accent = accent,
-		Icon = iconLabel,
-		Text = textLabel
-	}
+				TextXAlignment =
+					Enum.TextXAlignment.Left,
 
-	button.MouseEnter:Connect(function()
+				ZIndex =
+					21
 
-		if button:GetAttribute("Selected") then
-			return
-		end
+			},
+			Row
+		)
 
-		Tween(button,.12,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.HOVER
-		})
+	local DescLabel =
+		New(
+			"TextLabel",
+			{
 
-	end)
+				Size =
+					UDim2.new(
+						1,
+						-75,
+						0,
+						15
+					),
 
-	button.MouseLeave:Connect(function()
+				Position =
+					UDim2.fromOffset(
+						10,
+						25
+					),
 
-		if button:GetAttribute("Selected") then
-			return
-		end
+				BackgroundTransparency =
+					1,
 
-		Tween(button,.12,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.PANEL
-		})
+				Text =
+					description or "",
 
-	end)
+				TextColor3 =
+					COLORS.SUB,
 
-	return button
+				Font =
+					Enum.Font.Gotham,
+
+				TextSize =
+					7,
+
+				TextXAlignment =
+					Enum.TextXAlignment.Left,
+
+				TextTruncate =
+					Enum.TextTruncate.AtEnd,
+
+				ZIndex =
+					21
+
+			},
+			Row
+		)
+
+	return Row
 end
 
-CreateNavButton("Visual","◈",1)
-CreateNavButton("Combat","⌁",2)
-CreateNavButton("Movement","↗",3)
-CreateNavButton("Misc","◆",4)
-CreateNavButton("Settings","⚙",5)
-
 --==================================================
--- PAGE SWITCHING
+-- TOGGLE CREATOR
 --==================================================
 
-local Descriptions = {
-	Visual = "Player visuals and camera",
-	Combat = "Targeting and combat",
-	Movement = "Movement controls",
-	Misc = "Extra gameplay options",
-	Settings = "Rusted configuration"
-}
+local function CreateToggle(
+	parent,
+	title,
+	description,
+	key
+)
 
-local CurrentPage
+	local Row =
+		CreateRow(
+			parent,
+			title,
+			description
+		)
 
-local function SwitchPage(name)
+	local Toggle =
+		New(
+			"TextButton",
+			{
 
-	local page = Pages[name]
+				Name =
+					"Toggle",
 
-	if not page then
-		return
-	end
+				Size =
+					UDim2.fromOffset(
+						42,
+						22
+					),
 
-	CurrentPage = name
+				Position =
+					UDim2.new(
+						1,
+						-52,
+						.5,
+						-11
+					),
 
-	for pageName, pageObject in pairs(Pages) do
-		pageObject.Visible = pageName == name
-	end
+				BackgroundColor3 =
+					COLORS.DARK,
 
-	for buttonName, data in pairs(NavButtons) do
+				BorderSizePixel =
+					0,
 
-		local selected = buttonName == name
+				AutoButtonColor =
+					false,
 
-		data.Button:SetAttribute("Selected",selected)
-		data.Accent.Visible = selected
+				Text =
+					"",
 
-		if selected then
+				ZIndex =
+					23
 
-			Tween(data.Button,.16,Enum.EasingStyle.Back,nil,{
-				BackgroundColor3 = COLORS.HOVER
-			})
+			},
+			Row
+		)
 
-			data.Icon.TextColor3 = COLORS.PURPLE
-			data.Text.TextColor3 = COLORS.TEXT
+	Corner(
+		Toggle,
+		11
+	)
+
+	local Circle =
+		New(
+			"Frame",
+			{
+
+				Name =
+					"Circle",
+
+				Size =
+					UDim2.fromOffset(
+						16,
+						16
+					),
+
+				Position =
+					UDim2.fromOffset(
+						3,
+						3
+					),
+
+				BackgroundColor3 =
+					COLORS.WHITE,
+
+				BorderSizePixel =
+					0,
+
+				ZIndex =
+					24
+
+			},
+			Toggle
+		)
+
+	Corner(
+		Circle,
+		8
+	)
+
+	local function Update()
+
+		local enabled =
+			S[key] == true
+
+		if enabled then
+
+			Tween(
+				Toggle,
+				.15,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out,
+				{
+					BackgroundColor3 =
+						COLORS.PURPLE
+				}
+			)
+
+			Tween(
+				Circle,
+				.15,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out,
+				{
+					Position =
+						UDim2.fromOffset(
+							23,
+							3
+						)
+				}
+			)
 
 		else
 
-			Tween(data.Button,.12,Enum.EasingStyle.Quart,nil,{
-				BackgroundColor3 = COLORS.PANEL
-			})
+			Tween(
+				Toggle,
+				.15,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out,
+				{
+					BackgroundColor3 =
+						COLORS.DARK
+				}
+			)
 
-			data.Icon.TextColor3 = COLORS.SUB
-			data.Text.TextColor3 = COLORS.SUB
+			Tween(
+				Circle,
+				.15,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out,
+				{
+					Position =
+						UDim2.fromOffset(
+							3,
+							3
+						)
+				}
+			)
 
 		end
 
 	end
 
-	PageTitle.Text = name
-	PageDesc.Text = Descriptions[name] or ""
+	Toggle.Activated:Connect(function()
 
-	PageTitle.Position = UDim2.fromOffset(-10,7)
-	PageTitle.TextTransparency = 1
+		S[key] =
+			not S[key]
 
-	Tween(PageTitle,.25,Enum.EasingStyle.Back,nil,{
-		Position = UDim2.fromOffset(0,7),
-		TextTransparency = 0
-	})
+		Update()
 
-end
-
-for name,data in pairs(NavButtons) do
-
-	data.Button.Activated:Connect(function()
-		SwitchPage(name)
 	end)
 
+	Update()
+
+	return Row
 end
 
 --==================================================
--- FLOATING LOGO
--- ONLY LOGO WHEN MINIMIZED
+-- COMBAT PAGE
 --==================================================
 
-local Float = New("TextButton", {
-	Name = "RustedLogo",
+CreateToggle(
+	CombatPage,
+	"Aim Assist",
+	"Selects the closest valid target",
+	"AimAssist"
+)
 
-	AnchorPoint = Vector2.new(.5,.5),
+CreateToggle(
+	CombatPage,
+	"Players",
+	"Allow player targets",
+	"AimPlayers"
+)
 
-	Position = UDim2.new(0,42,.5,0),
+CreateToggle(
+	CombatPage,
+	"NPC",
+	"Allow NPC targets",
+	"AimNPC"
+)
 
-	Size = UDim2.fromOffset(46,46),
+CreateToggle(
+	CombatPage,
+	"Visible Only",
+	"Ignore targets behind walls",
+	"AimVisibleOnly"
+)
 
-	BackgroundColor3 = COLORS.BG,
-	BorderSizePixel = 0,
+CreateToggle(
+	CombatPage,
+	"FOV",
+	"Use screen distance",
+	"FOVChanger"
+)
 
-	Text = "R",
+--==================================================
+-- VISUALS PAGE
+--==================================================
 
-	TextColor3 = COLORS.WHITE,
+CreateToggle(
+	VisualsPage,
+	"ESP",
+	"Show valid targets",
+	"ESP"
+)
 
-	Font = Enum.Font.GothamBlack,
-	TextSize = 21,
+CreateToggle(
+	VisualsPage,
+	"Box ESP",
+	"Display target boxes",
+	"BoxESP"
+)
 
-	AutoButtonColor = false,
+CreateToggle(
+	VisualsPage,
+	"Names",
+	"Display target names",
+	"Names"
+)
 
-	Visible = false,
+CreateToggle(
+	VisualsPage,
+	"Health",
+	"Display target health",
+	"Health"
+)
 
-	ZIndex = 100
-}, Gui)
+CreateToggle(
+	VisualsPage,
+	"Distance",
+	"Display target distance",
+	"Distance"
+)
 
-Corner(Float,14)
+CreateToggle(
+	VisualsPage,
+	"Snapline",
+	"Line to selected target",
+	"Snapline"
+)
 
-local FloatStroke = Stroke(
-	Float,
-	COLORS.PURPLE,
-	2,
-	.05
+CreateToggle(
+	VisualsPage,
+	"Team Check",
+	"Ignore teammates",
+	"TeamCheck"
+)
+
+--==================================================
+-- MOVEMENT PAGE
+--==================================================
+
+CreateToggle(
+	MovementPage,
+	"Speed",
+	"Custom movement speed",
+	"SpeedHack"
+)
+
+CreateToggle(
+	MovementPage,
+	"Jump",
+	"Custom jump power",
+	"Jump"
+)
+
+CreateToggle(
+	MovementPage,
+	"Noclip",
+	"Disable character collisions",
+	"Noclip"
+)
+
+--==================================================
+-- MISC PAGE
+--==================================================
+
+CreateToggle(
+	MiscPage,
+	"Fullbright",
+	"Remove dark lighting",
+	"Fullbright"
+)
+
+CreateToggle(
+	MiscPage,
+	"Neon Gun",
+	"Make equipped weapon neon",
+	"NeonGuns"
+)
+
+CreateToggle(
+	MiscPage,
+	"Custom Hands",
+	"Move the current viewmodel",
+	"CustomHands"
+)
+
+CreateToggle(
+	MiscPage,
+	"Menu Animations",
+	"Enable interface animations",
+	"MenuAnimations"
+)
+
+--==================================================
+-- SETTINGS PAGE
+--==================================================
+
+local SettingsInfo =
+	CreateRow(
+		SettingsPage,
+		"RUSTED HUB",
+		"v3.2"
+	)
+
+local InfoLabel =
+	New(
+		"TextLabel",
+		{
+
+			Size =
+				UDim2.new(
+					1,
+					-20,
+					0,
+					60
+				),
+
+			Position =
+				UDim2.fromOffset(
+					10,
+					58
+				),
+
+			BackgroundTransparency =
+				1,
+
+			Text =
+				"Compact client interface\nCombat • Visuals • Movement • Misc",
+
+			TextColor3 =
+				COLORS.SUB,
+
+			Font =
+				Enum.Font.Gotham,
+
+			TextSize =
+				9,
+
+			TextWrapped =
+				true,
+
+			TextXAlignment =
+				Enum.TextXAlignment.Left,
+
+			TextYAlignment =
+				Enum.TextYAlignment.Top,
+
+			ZIndex =
+				21
+
+		},
+		SettingsPage
+	)
+
+--==================================================
+-- PAGE SWITCH
+--==================================================
+
+local CurrentPage =
+	"CombatPage"
+
+local function ShowPage(
+	name
+)
+
+	for pageName, frame in pairs(
+		Pages
+	) do
+
+		frame.Visible =
+			pageName == name
+
+	end
+
+	for categoryName, data in pairs(
+		Categories
+	) do
+
+		local active =
+			categoryName ==
+			name:gsub(
+				"Page",
+				""
+			)
+
+		if active then
+
+			data.Button.BackgroundColor3 =
+				COLORS.PURPLE
+
+			data.Button.TextColor3 =
+				COLORS.WHITE
+
+			data.Stroke.Transparency =
+				.2
+
+		else
+
+			data.Button.BackgroundColor3 =
+				COLORS.ROW
+
+			data.Button.TextColor3 =
+				COLORS.SUB
+
+			data.Stroke.Transparency =
+				1
+
+		end
+
+	end
+
+	CurrentPage =
+		name
+
+end
+
+CombatButton.Activated:Connect(function()
+	ShowPage("CombatPage")
+end)
+
+VisualsButton.Activated:Connect(function()
+	ShowPage("VisualsPage")
+end)
+
+MovementButton.Activated:Connect(function()
+	ShowPage("MovementPage")
+end)
+
+MiscButton.Activated:Connect(function()
+	ShowPage("MiscPage")
+end)
+
+SettingsButton.Activated:Connect(function()
+	ShowPage("SettingsPage")
+end)
+
+ShowPage(
+	"CombatPage"
 )
 
 --==================================================
 -- DRAG SYSTEM
 --==================================================
 
-local function MakeDraggable(handle, object)
+local Dragging =
+	false
 
-	local dragging = false
-	local dragStart
-	local startPosition
+local DragStart =
+	nil
 
-	handle.InputBegan:Connect(function(input)
+local StartPosition =
+	nil
 
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+local function UpdateDrag(
+	input
+)
 
-			dragging = true
+	if not Dragging
+		or not DragStart
+		or not StartPosition then
 
-			dragStart = input.Position
-			startPosition = object.Position
+		return
+
+	end
+
+	local Delta =
+		input.Position -
+		DragStart
+
+	Main.Position =
+		UDim2.new(
+			StartPosition.X.Scale,
+			StartPosition.X.Offset +
+				Delta.X,
+
+			StartPosition.Y.Scale,
+			StartPosition.Y.Offset +
+				Delta.Y
+		)
+
+end
+
+Top.InputBegan:Connect(
+	function(input)
+
+		if
+			input.UserInputType ==
+				Enum.UserInputType.MouseButton1
+			or
+			input.UserInputType ==
+				Enum.UserInputType.Touch
+		then
+
+			Dragging =
+				true
+
+			DragStart =
+				input.Position
+
+			StartPosition =
+				Main.Position
 
 		end
 
-	end)
+	end
+)
 
-	UIS.InputChanged:Connect(function(input)
+Top.InputChanged:Connect(
+	function(input)
 
-		if not dragging then
-			return
+		if
+			input.UserInputType ==
+				Enum.UserInputType.MouseMovement
+			or
+			input.UserInputType ==
+				Enum.UserInputType.Touch
+		then
+
+			DragStart =
+				DragStart or
+				input.Position
+
 		end
 
-		if input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch then
+	end
+)
 
-			local delta = input.Position - dragStart
+UIS.InputChanged:Connect(
+	function(input)
 
-			object.Position = UDim2.new(
-				startPosition.X.Scale,
-				startPosition.X.Offset + delta.X,
+		if
+			input.UserInputType ==
+				Enum.UserInputType.MouseMovement
+			or
+			input.UserInputType ==
+				Enum.UserInputType.Touch
+		then
 
-				startPosition.Y.Scale,
-				startPosition.Y.Offset + delta.Y
+			UpdateDrag(
+				input
 			)
 
 		end
 
-	end)
+	end
+)
 
-	UIS.InputEnded:Connect(function(input)
+UIS.InputEnded:Connect(
+	function(input)
 
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+		if
+			input.UserInputType ==
+				Enum.UserInputType.MouseButton1
+			or
+			input.UserInputType ==
+				Enum.UserInputType.Touch
+		then
 
-			dragging = false
+			Dragging =
+				false
 
 		end
 
-	end)
-
-end
-
-MakeDraggable(Top,Main)
-MakeDraggable(Float,Float)
+	end
+)
 
 --==================================================
--- OPEN / CLOSE STATE
+-- MINIMIZE STATE
 --==================================================
 
-local Open = true
+local Minimized =
+	false
 
---==================================================
--- OPEN MENU
---==================================================
+local FullSize =
+	UDim2.fromOffset(
+		500,
+		300
+	)
 
-local function OpenMenu()
+local MinSize =
+	UDim2.fromOffset(
+		500,
+		48
+	)
 
-	if Open then
-		return
+local function SetMinimized(
+	state
+)
+
+	Minimized =
+		state
+
+	if Minimized then
+
+		Minimize.Text =
+			"+"
+
+		if S.MenuAnimations then
+
+			Tween(
+				Main,
+				.2,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.Out,
+				{
+					Size =
+						MinSize
+				}
+			)
+
+		else
+
+			Main.Size =
+				MinSize
+
+		end
+
+	else
+
+		Minimize.Text =
+			"—"
+
+		if S.MenuAnimations then
+
+			Tween(
+				Main,
+				.2,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.Out,
+				{
+					Size =
+						FullSize
+				}
+			)
+
+		else
+
+			Main.Size =
+				FullSize
+
+		end
+
 	end
 
-	Open = true
-
-	Float.Visible = false
-	Main.Visible = true
-
-	Main.Size = UDim2.fromOffset(35,35)
-	Main.Rotation = -15
-	Main.BackgroundTransparency = 1
-
-	Tween(
-		Main,
-		.5,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.Out,
-		{
-			Size = UDim2.fromOffset(580,350),
-			Rotation = 0,
-			BackgroundTransparency = 0
-		}
-	)
-
-	LogoBox.Size = UDim2.fromOffset(4,4)
-	LogoBox.Rotation = -90
-
-	Tween(
-		LogoBox,
-		.55,
-		Enum.EasingStyle.Elastic,
-		Enum.EasingDirection.Out,
-		{
-			Size = UDim2.fromOffset(32,32),
-			Rotation = 0
-		}
-	)
-
 end
 
---==================================================
--- MINIMIZE
---==================================================
+Minimize.Activated:Connect(
+	function()
 
-local function MinimizeMenu()
+		SetMinimized(
+			not Minimized
+		)
 
-	if not Open then
-		return
 	end
-
-	Open = false
-
-	Tween(
-		Main,
-		.3,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.In,
-		{
-			Size = UDim2.fromOffset(35,35),
-			Rotation = 18,
-			BackgroundTransparency = 1
-		}
-	)
-
-	task.delay(.25,function()
-
-		if Open then
-			return
-		end
-
-		Main.Visible = false
-
-		Float.Visible = true
-
-		Float.Size = UDim2.fromOffset(4,4)
-		Float.Rotation = -90
-
-		Tween(
-			Float,
-			.55,
-			Enum.EasingStyle.Elastic,
-			Enum.EasingDirection.Out,
-			{
-				Size = UDim2.fromOffset(46,46),
-				Rotation = 0
-			}
-		)
-
-	end)
-
-end
-
---==================================================
--- BUTTON CONNECTIONS
---==================================================
-
-Minimize.Activated:Connect(MinimizeMenu)
-
-Float.Activated:Connect(OpenMenu)
-
-Close.Activated:Connect(function()
-
-	Open = false
-
-	Tween(
-		Main,
-		.35,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.In,
-		{
-			Size = UDim2.fromOffset(20,20),
-			Rotation = 25,
-			BackgroundTransparency = 1
-		}
-	)
-
-	task.delay(.35,function()
-
-		if Gui then
-			Gui:Destroy()
-		end
-
-	end)
-
-end)
-
---==================================================
--- CRAZY BUTTON ANIMATION
---==================================================
-
-local function ButtonHover(button, normalSize, hoverSize)
-
-	button.MouseEnter:Connect(function()
-
-		Tween(
-			button,
-			.15,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Size = hoverSize,
-				Rotation = -2
-			}
-		)
-
-	end)
-
-	button.MouseLeave:Connect(function()
-
-		Tween(
-			button,
-			.15,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Size = normalSize,
-				Rotation = 0
-			}
-		)
-
-	end)
-
-end
-
-ButtonHover(
-	Minimize,
-	UDim2.fromOffset(30,30),
-	UDim2.fromOffset(33,33)
-)
-
-ButtonHover(
-	Close,
-	UDim2.fromOffset(30,30),
-	UDim2.fromOffset(33,33)
-)
-
-ButtonHover(
-	Float,
-	UDim2.fromOffset(46,46),
-	UDim2.fromOffset(52,52)
 )
 
 --==================================================
--- INITIAL ANIMATION
+-- CLOSE
 --==================================================
 
-SwitchPage("Visual")
+Close.Activated:Connect(
+	function()
 
-Main.BackgroundTransparency = 1
-Main.Size = UDim2.fromOffset(25,25)
-Main.Rotation = -12
+		Gui.Enabled =
+			false
 
-task.delay(.05,function()
+	end
+)
 
-	Tween(
-		Main,
-		.6,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.Out,
+--==================================================
+-- END PART 1B
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 2A/7
+--                  ESP CORE
+--==================================================
+
+--==================================================
+-- ESP FOLDER
+--==================================================
+
+local ESPFolder =
+	New(
+		"Folder",
 		{
-			Size = UDim2.fromOffset(580,350),
-			Rotation = 0,
-			BackgroundTransparency = 0
-		}
+			Name = "RustedESP"
+		},
+		Gui
 	)
 
-	Tween(
-		LogoBox,
-		.65,
-		Enum.EasingStyle.Elastic,
-		Enum.EasingDirection.Out,
-		{
-			Rotation = 360
-		}
-	)
-
-end)
-
-print("RUSTED v3.1 | PART 1/4")
-
 --==================================================
---              RUSTED v3.1 PART 2/4
---              VISUAL + ESP
---==================================================
-
---==================================================
--- VISUAL HELPERS
+-- ESP OBJECT STORAGE
 --==================================================
 
 local ESPObjects = {}
 
-local function RemoveESP(player)
+--==================================================
+-- TARGET CHARACTER
+--==================================================
 
-	local data = ESPObjects[player]
+local function GetTargetCharacter(
+	player
+)
 
-	if not data then
-		return
+	if not player then
+		return nil
 	end
 
-	if data.Highlight then
-		data.Highlight:Destroy()
+	local character =
+		player.Character
+
+	if not character then
+		return nil
 	end
 
-	if data.Billboard then
-		data.Billboard:Destroy()
+	local humanoid =
+		character:
+			FindFirstChildOfClass(
+				"Humanoid"
+			)
+
+	local root =
+		GetRoot(
+			character
+		)
+
+	if not humanoid
+		or not root then
+
+		return nil
+
 	end
 
-	if data.Connection then
-		data.Connection:Disconnect()
+	if humanoid.Health <= 0 then
+		return nil
 	end
 
-	ESPObjects[player] = nil
+	return character
 end
 
-local function IsEnemy(player)
+--==================================================
+-- TEAM CHECK
+--==================================================
+
+local function IsEnemy(
+	player
+)
 
 	if player == Player then
 		return false
@@ -1136,8 +2453,88 @@ local function IsEnemy(player)
 		return true
 	end
 
-	if Player.Team and player.Team then
-		return Player.Team ~= player.Team
+	if Player.Team
+		and player.Team
+		and Player.Team ==
+			player.Team then
+
+		return false
+
+	end
+
+	return true
+end
+
+--==================================================
+-- PLAYER TARGET CHECK
+--==================================================
+
+local function IsValidPlayer(
+	player
+)
+
+	if not player then
+		return false
+	end
+
+	if player == Player then
+		return false
+	end
+
+	if not IsEnemy(player) then
+		return false
+	end
+
+	return
+		GetTargetCharacter(
+			player
+		) ~= nil
+
+end
+
+--==================================================
+-- NPC CHECK
+--==================================================
+
+local function IsNPC(
+	model
+)
+
+	if not model
+		or not model:IsA("Model") then
+
+		return false
+
+	end
+
+	if Players:GetPlayerFromCharacter(
+		model
+	) then
+
+		return false
+
+	end
+
+	local humanoid =
+		model:
+			FindFirstChildOfClass(
+				"Humanoid"
+			)
+
+	local root =
+		GetRoot(
+			model
+		)
+
+	if not humanoid
+		or not root then
+
+		return false
+
+	end
+
+	if humanoid.Health <= 0 then
+		return false
 	end
 
 	return true
@@ -1147,196 +2544,681 @@ end
 -- CREATE ESP
 --==================================================
 
-local function CreateESP(player)
+local function CreateESP(
+	key,
+	character,
+	displayName
+)
 
-	if player == Player then
+	if ESPObjects[key] then
+		return ESPObjects[key]
+	end
+
+	local root =
+		GetRoot(
+			character
+		)
+
+	if not root then
+		return nil
+	end
+
+	--==============================================
+	-- BILLBOARD
+	--==============================================
+
+	local Billboard =
+		New(
+			"BillboardGui",
+			{
+
+				Name =
+					"ESP_" ..
+					tostring(key),
+
+				Adornee =
+					root,
+
+				Size =
+					UDim2.fromOffset(
+						150,
+						70
+					),
+
+				StudsOffset =
+					Vector3.new(
+						0,
+						3,
+						0
+					),
+
+				AlwaysOnTop =
+					true,
+
+				LightInfluence =
+					0,
+
+				Enabled =
+					true,
+
+				ZIndexBehavior =
+					Enum.ZIndexBehavior.Sibling
+
+			},
+			ESPFolder
+		)
+
+	--==============================================
+	-- NAME
+	--==============================================
+
+	local NameLabel =
+		New(
+			"TextLabel",
+			{
+
+				Name =
+					"Name",
+
+				Size =
+					UDim2.new(
+						1,
+						0,
+						0,
+						18
+					),
+
+				Position =
+					UDim2.fromOffset(
+						0,
+						0
+					),
+
+				BackgroundTransparency =
+					1,
+
+				Text =
+					displayName
+					or "Target",
+
+				TextColor3 =
+					COLORS.WHITE,
+
+				TextStrokeTransparency =
+					.25,
+
+				Font =
+					Enum.Font.GothamBold,
+
+				TextSize =
+					11,
+
+				TextXAlignment =
+					Enum.TextXAlignment.Center,
+
+				Visible =
+					S.Names,
+
+				ZIndex =
+					5
+
+			},
+			Billboard
+		)
+
+	--==============================================
+	-- HEALTH
+	--==============================================
+
+	local HealthLabel =
+		New(
+			"TextLabel",
+			{
+
+				Name =
+					"Health",
+
+				Size =
+					UDim2.new(
+						1,
+						0,
+						0,
+						15
+					),
+
+				Position =
+					UDim2.fromOffset(
+						0,
+						18
+					),
+
+				BackgroundTransparency =
+					1,
+
+				TextColor3 =
+					COLORS.GREEN,
+
+				TextStrokeTransparency =
+					.35,
+
+				Font =
+					Enum.Font.GothamMedium,
+
+				TextSize =
+					9,
+
+				TextXAlignment =
+					Enum.TextXAlignment.Center,
+
+				Visible =
+					S.Health,
+
+				ZIndex =
+					5
+
+			},
+			Billboard
+		)
+
+	--==============================================
+	-- DISTANCE
+	--==============================================
+
+	local DistanceLabel =
+		New(
+			"TextLabel",
+			{
+
+				Name =
+					"Distance",
+
+				Size =
+					UDim2.new(
+						1,
+						0,
+						0,
+						15
+					),
+
+				Position =
+					UDim2.fromOffset(
+						0,
+						33
+					),
+
+				BackgroundTransparency =
+					1,
+
+				TextColor3 =
+					COLORS.SUB,
+
+				TextStrokeTransparency =
+					.4,
+
+				Font =
+					Enum.Font.Gotham,
+
+				TextSize =
+					8,
+
+				TextXAlignment =
+					Enum.TextXAlignment.Center,
+
+				Visible =
+					S.Distance,
+
+				ZIndex =
+					5
+
+			},
+			Billboard
+		)
+
+	--==============================================
+	-- BOX
+	--==============================================
+
+	local Box =
+		New(
+			"Frame",
+			{
+
+				Name =
+					"Box",
+
+				Size =
+					UDim2.fromOffset(
+						55,
+						75
+					),
+
+				Position =
+					UDim2.new(
+						.5,
+						-27,
+						.5,
+						-37
+					),
+
+				BackgroundTransparency =
+					1,
+
+				Visible =
+					S.BoxESP,
+
+				ZIndex =
+					3
+
+			},
+			Billboard
+		)
+
+	local BoxStroke =
+		Stroke(
+			Box,
+			COLORS.PURPLE,
+			1.5,
+			0
+		)
+
+	--==============================================
+	-- STORE
+	--==============================================
+
+	local Data = {
+
+		Billboard =
+			Billboard,
+
+		Name =
+			NameLabel,
+
+		Health =
+			HealthLabel,
+
+		Distance =
+			DistanceLabel,
+
+		Box =
+			Box,
+
+		BoxStroke =
+			BoxStroke,
+
+		Character =
+			character,
+
+		Root =
+			root
+
+	}
+
+	ESPObjects[key] =
+		Data
+
+	return Data
+end
+
+--==================================================
+-- REMOVE ESP
+--==================================================
+
+local function RemoveESP(
+	key
+)
+
+	local data =
+		ESPObjects[key]
+
+	if not data then
 		return
 	end
 
-	if not IsEnemy(player) then
-		RemoveESP(player)
+	if data.Billboard then
+
+		pcall(function()
+
+			data.Billboard:
+				Destroy()
+
+		end)
+
+	end
+
+	ESPObjects[key] =
+		nil
+
+end
+
+--==================================================
+-- CLEAR ESP
+--==================================================
+
+local function ClearESP()
+
+	for key in pairs(
+		ESPObjects
+	) do
+
+		RemoveESP(
+			key
+		)
+
+	end
+
+end
+
+--==================================================
+-- UPDATE ESP DATA
+--==================================================
+
+local function UpdateESPObject(
+	data
+)
+
+	if not data then
 		return
 	end
 
-	local character = player.Character
+	local character =
+		data.Character
+
+	if not character
+		or not character.Parent then
+
+		return
+
+	end
+
+	local humanoid =
+		character:
+			FindFirstChildOfClass(
+				"Humanoid"
+			)
+
+	local root =
+		GetRoot(
+			character
+		)
+
+	if not humanoid
+		or not root then
+
+		return
+
+	end
+
+	data.Root =
+		root
+
+	--==============================================
+	-- HEALTH TEXT
+	--==============================================
+
+	local health =
+		math.max(
+			0,
+			math.floor(
+				humanoid.Health
+			)
+		)
+
+	local maxHealth =
+		math.max(
+			1,
+			math.floor(
+				humanoid.MaxHealth
+			)
+		)
+
+	data.Health.Text =
+		"HP: " ..
+		tostring(health) ..
+		"/" ..
+		tostring(maxHealth)
+
+	--==============================================
+	-- DISTANCE
+	--==============================================
+
+	local myCharacter =
+		GetCharacter()
+
+	local myRoot =
+		GetRoot(
+			myCharacter
+		)
+
+	if myRoot then
+
+		local distance =
+			(
+				myRoot.Position -
+				root.Position
+			).Magnitude
+
+		data.Distance.Text =
+			string.format(
+				"%.0f studs",
+				distance
+			)
+
+	end
+
+	--==============================================
+	-- VISIBILITY
+	--==============================================
+
+	data.Name.Visible =
+		S.Names
+
+	data.Health.Visible =
+		S.Health
+
+	data.Distance.Visible =
+		S.Distance
+
+	data.Box.Visible =
+		S.BoxESP
+
+	data.Billboard.Enabled =
+		S.ESP
+
+end
+
+--==================================================
+-- END PART 2A/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 2B/7
+--          ESP SCANNER + REALTIME UPDATE
+--==================================================
+
+--==================================================
+-- NPC STORAGE
+--==================================================
+
+local NPCObjects = {}
+
+--==================================================
+-- ADD PLAYER ESP
+--==================================================
+
+local function AddPlayerESP(
+	player
+)
+
+	if not S.ESP then
+		return
+	end
+
+	if not IsValidPlayer(player) then
+		return
+	end
+
+	local character =
+		GetTargetCharacter(
+			player
+		)
 
 	if not character then
 		return
 	end
 
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local root = character:FindFirstChild("HumanoidRootPart")
+	local key =
+		"PLAYER_" ..
+		player.UserId
 
-	if not humanoid or not root then
+	local data =
+		CreateESP(
+			key,
+			character,
+			player.DisplayName
+		)
+
+	if data then
+
+		data.Player =
+			player
+
+		data.IsNPC =
+			false
+
+	end
+
+end
+
+--==================================================
+-- REMOVE PLAYER ESP
+--==================================================
+
+local function RemovePlayerESP(
+	player
+)
+
+	if not player then
 		return
 	end
 
-	RemoveESP(player)
+	local key =
+		"PLAYER_" ..
+		player.UserId
 
-	local data = {}
-	ESPObjects[player] = data
+	RemoveESP(
+		key
+	)
 
-	--================================================
-	-- HIGHLIGHT
-	--================================================
+end
 
-	if S.ESP then
+--==================================================
+-- ADD NPC ESP
+--==================================================
 
-		local highlight = Instance.new("Highlight")
+local function AddNPCESP(
+	model
+)
 
-		highlight.Name = "RustedESP"
-		highlight.Adornee = character
+	if not S.ESP
+		or not S.AimNPC then
 
-		highlight.FillColor = COLORS.PURPLE
-		highlight.OutlineColor = COLORS.WHITE
-
-		highlight.FillTransparency = .72
-		highlight.OutlineTransparency = .05
-
-		highlight.DepthMode =
-			Enum.HighlightDepthMode.AlwaysOnTop
-
-		highlight.Parent = character
-
-		data.Highlight = highlight
+		return
 
 	end
 
-	--================================================
-	-- BILLBOARD
-	--================================================
+	if not IsNPC(model) then
+		return
+	end
 
-	if S.Names or S.Health or S.Distance then
+	local key =
+		"NPC_" ..
+		model:GetDebugId()
 
-		local billboard = Instance.new("BillboardGui")
+	local data =
+		CreateESP(
+			key,
+			model,
+			model.Name
+		)
 
-		billboard.Name = "RustedESPInfo"
+	if data then
 
-		billboard.Adornee = root
+		data.NPC =
+			model
 
-		billboard.Size = UDim2.fromOffset(170,55)
+		data.IsNPC =
+			true
 
-		billboard.StudsOffset = Vector3.new(0,3.2,0)
-
-		billboard.AlwaysOnTop = true
-
-		billboard.MaxDistance = 250
-
-		billboard.Parent = root
-
-		Corner(billboard,6)
-
-		local text = Instance.new("TextLabel")
-
-		text.Name = "Info"
-
-		text.Size = UDim2.fromScale(1,1)
-
-		text.BackgroundTransparency = 1
-
-		text.TextColor3 = COLORS.WHITE
-
-		text.TextStrokeTransparency = .35
-
-		text.Font = Enum.Font.GothamBold
-
-		text.TextSize = 11
-
-		text.TextWrapped = true
-
-		text.Parent = billboard
-
-		data.Billboard = billboard
-		data.Text = text
-
-		local function UpdateText()
-
-			if not billboard.Parent then
-				return
-			end
-
-			local lines = {}
-
-			if S.Names then
-				table.insert(lines,player.DisplayName)
-			end
-
-			if S.Health then
-				table.insert(
-					lines,
-					"HP: "..math.floor(
-						math.max(0,humanoid.Health)
-					).."/"..math.floor(humanoid.MaxHealth)
-				)
-			end
-
-			if S.Distance then
-
-				local myCharacter = Player.Character
-				local myRoot =
-					myCharacter and
-					myCharacter:FindFirstChild(
-						"HumanoidRootPart"
-					)
-
-				if myRoot then
-
-					local distance = math.floor(
-						(myRoot.Position-root.Position).Magnitude
-					)
-
-					table.insert(
-						lines,
-						distance.."m"
-					)
-
-				end
-
-			end
-
-			text.Text = table.concat(lines,"\n")
-
-		end
-
-		data.Update = UpdateText
-
-		UpdateText()
-
-		data.Connection =
-			RunService.RenderStepped:Connect(
-				function()
-
-					if not character.Parent then
-						RemoveESP(player)
-						return
-					end
-
-					UpdateText()
-
-				end
-			)
+		NPCObjects[model] =
+			key
 
 	end
 
 end
 
 --==================================================
--- REFRESH ESP
+-- REMOVE NPC ESP
 --==================================================
 
-local function RefreshESP()
+local function RemoveNPCESP(
+	model
+)
 
-	for player in pairs(ESPObjects) do
-		RemoveESP(player)
+	local key =
+		NPCObjects[model]
+
+	if key then
+
+		RemoveESP(
+			key
+		)
+
+		NPCObjects[model] =
+			nil
+
 	end
 
-	for _,player in ipairs(Players:GetPlayers()) do
+end
+
+--==================================================
+-- SCAN PLAYERS
+--==================================================
+
+local function ScanPlayers()
+
+	if not S.ESP then
+
+		for key in pairs(
+			ESPObjects
+		) do
+
+			if string.sub(
+				key,
+				1,
+				7
+			) == "PLAYER_" then
+
+				RemoveESP(
+					key
+				)
+
+			end
+
+		end
+
+		return
+	end
+
+	for _, player in ipairs(
+		Players:GetPlayers()
+	) do
 
 		if player ~= Player then
 
-			task.spawn(function()
-				CreateESP(player)
-			end)
+			AddPlayerESP(
+				player
+			)
 
 		end
 
@@ -1345,2020 +3227,2238 @@ local function RefreshESP()
 end
 
 --==================================================
--- VISUAL PAGE HELPERS
+-- SCAN NPCS
 --==================================================
 
-local function AddSection(parent,text)
+local function ScanNPCs()
 
-	local label = New("TextLabel",{
+	if not S.ESP
+		or not S.AimNPC then
 
-		Size = UDim2.new(1,0,0,20),
+		for model in pairs(
+			NPCObjects
+		) do
 
-		BackgroundTransparency = 1,
+			RemoveNPCESP(
+				model
+			)
 
-		Text = text,
+		end
 
-		TextColor3 = COLORS.DARK,
+		return
+	end
 
-		Font = Enum.Font.GothamBold,
-		TextSize = 8,
+	for _, object in ipairs(
+		workspace:GetDescendants()
+	) do
 
-		TextXAlignment = Enum.TextXAlignment.Left,
+		if object:IsA("Model")
+			and IsNPC(object) then
 
-		ZIndex = 13
+			AddNPCESP(
+				object
+			)
 
-	},parent)
+		end
 
-	return label
+	end
+
 end
 
-local function AddToggle(parent,title,description,key,callback)
+--==================================================
+-- UPDATE ALL ESP
+--==================================================
 
-	local row = New("TextButton",{
+local function UpdateAllESP()
 
-		Size = UDim2.new(1,0,0,46),
+	if not S.ESP then
+		return
+	end
 
-		BackgroundColor3 = COLORS.ROW,
+	for key, data in pairs(
+		ESPObjects
+	) do
 
-		BorderSizePixel = 0,
+		local valid =
+			false
 
-		Text = "",
+		--==========================================
+		-- PLAYER
+		--==========================================
 
-		AutoButtonColor = false,
+		if not data.IsNPC
+			and data.Player then
 
-		ZIndex = 13
+			local player =
+				data.Player
 
-	},parent)
+			if IsValidPlayer(
+				player
+			) then
 
-	Corner(row,9)
+				local character =
+					GetTargetCharacter(
+						player
+					)
 
-	local titleLabel = New("TextLabel",{
+				if character then
 
-		Size = UDim2.new(1,-70,0,19),
+					data.Character =
+						character
 
-		Position = UDim2.fromOffset(11,4),
+					valid =
+						true
 
-		BackgroundTransparency = 1,
+				end
 
-		Text = title,
+			end
 
-		TextColor3 = COLORS.TEXT,
+		--==========================================
+		-- NPC
+		--==========================================
 
-		Font = Enum.Font.GothamBold,
+		elseif data.IsNPC
+			and data.NPC then
 
-		TextSize = 10,
+			local npc =
+				data.NPC
 
-		TextXAlignment = Enum.TextXAlignment.Left,
+			if IsNPC(npc) then
 
-		ZIndex = 14
+				data.Character =
+					npc
 
-	},row)
+				valid =
+					true
 
-	local descLabel = New("TextLabel",{
+			end
 
-		Size = UDim2.new(1,-70,0,14),
+		end
 
-		Position = UDim2.fromOffset(11,24),
+		if valid then
 
-		BackgroundTransparency = 1,
-
-		Text = description or "",
-
-		TextColor3 = COLORS.SUB,
-
-		Font = Enum.Font.Gotham,
-
-		TextSize = 7,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-
-	},row)
-
-	local toggle = New("Frame",{
-
-		Size = UDim2.fromOffset(36,19),
-
-		Position = UDim2.new(1,-48,.5,-9),
-
-		BackgroundColor3 = COLORS.DARK,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 14
-
-	},row)
-
-	Corner(toggle,10)
-
-	local knob = New("Frame",{
-
-		Size = UDim2.fromOffset(13,13),
-
-		Position = UDim2.fromOffset(3,3),
-
-		BackgroundColor3 = COLORS.WHITE,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 15
-
-	},toggle)
-
-	Corner(knob,7)
-
-	local function Update(value)
-
-		S[key] = value
-
-		if value then
-
-			Tween(toggle,.16,Enum.EasingStyle.Quart,nil,{
-				BackgroundColor3 = COLORS.PURPLE
-			})
-
-			Tween(knob,.2,Enum.EasingStyle.Back,nil,{
-				Position = UDim2.new(1,-16,.5,-6)
-			})
+			UpdateESPObject(
+				data
+			)
 
 		else
 
-			Tween(toggle,.16,Enum.EasingStyle.Quart,nil,{
-				BackgroundColor3 = COLORS.DARK
-			})
+			RemoveESP(
+				key
+			)
 
-			Tween(knob,.16,Enum.EasingStyle.Quart,nil,{
-				Position = UDim2.fromOffset(3,3)
-			})
-
-		end
-
-		if callback then
-			task.spawn(callback,value)
 		end
 
 	end
 
-	row.Activated:Connect(function()
-		Update(not S[key])
-	end)
-
-	row.MouseEnter:Connect(function()
-
-		Tween(row,.1,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.HOVER
-		})
-
-	end)
-
-	row.MouseLeave:Connect(function()
-
-		Tween(row,.1,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.ROW
-		})
-
-	end)
-
-	Update(S[key])
-
-	return row
 end
-
---==================================================
--- VISUAL PAGE
---==================================================
-
-AddSection(
-	VisualPage,
-	"PLAYER ESP"
-)
-
-AddToggle(
-	VisualPage,
-	"ESP",
-	"Highlight enemy players",
-	"ESP",
-	function()
-		RefreshESP()
-	end
-)
-
-AddToggle(
-	VisualPage,
-	"Names",
-	"Show player names",
-	"Names",
-	function()
-		RefreshESP()
-	end
-)
-
-AddToggle(
-	VisualPage,
-	"Health",
-	"Show player health",
-	"Health",
-	function()
-		RefreshESP()
-	end
-)
-
-AddToggle(
-	VisualPage,
-	"Distance",
-	"Show distance to players",
-	"Distance",
-	function()
-		RefreshESP()
-	end
-)
-
-AddSection(
-	VisualPage,
-	"ESP OPTIONS"
-)
-
-AddToggle(
-	VisualPage,
-	"Team Check",
-	"Ignore players on your team",
-	"TeamCheck",
-	function()
-		RefreshESP()
-	end
-)
 
 --==================================================
 -- PLAYER EVENTS
 --==================================================
 
-Players.PlayerAdded:Connect(function(player)
+Players.PlayerAdded:Connect(
+	function(player)
 
-	player.CharacterAdded:Connect(function()
+		player.CharacterAdded:Connect(
+			function()
 
-		task.wait(.5)
+				task.wait(
+					0.5
+				)
 
-		if S.ESP or S.Names or S.Health or S.Distance then
-			CreateESP(player)
-		end
+				AddPlayerESP(
+					player
+				)
 
-	end)
+			end
+		)
 
-end)
+	end
+)
 
-Players.PlayerRemoving:Connect(function(player)
-	RemoveESP(player)
-end)
+Players.PlayerRemoving:Connect(
+	function(player)
 
-for _,player in ipairs(Players:GetPlayers()) do
+		RemovePlayerESP(
+			player
+		)
+
+	end
+)
+
+--==================================================
+-- EXISTING PLAYER CHARACTER EVENTS
+--==================================================
+
+for _, player in ipairs(
+	Players:GetPlayers()
+) do
 
 	if player ~= Player then
 
-		player.CharacterAdded:Connect(function()
+		player.CharacterAdded:Connect(
+			function()
 
-			task.wait(.5)
+				task.wait(
+					0.5
+				)
 
-			if S.ESP
-				or S.Names
-				or S.Health
-				or S.Distance then
-
-				CreateESP(player)
+				AddPlayerESP(
+					player
+				)
 
 			end
+		)
 
-		end)
+		player.CharacterRemoving:Connect(
+			function()
+
+				RemovePlayerESP(
+					player
+				)
+
+			end
+		)
 
 	end
 
 end
 
 --==================================================
--- COMBAT PAGE
+-- NPC DESCENDANT MONITOR
 --==================================================
 
-AddSection(
-	CombatPage,
-	"TARGETING"
-)
+workspace.DescendantAdded:Connect(
+	function(object)
 
-AddToggle(
-	CombatPage,
-	"Silent Aim",
-	"Target selection interface",
-	"SilentAim",
-	function(enabled)
+		if not S.ESP
+			or not S.AimNPC then
 
-		-- Actual weapon firing hook depends
-		-- on Rusted's weapon/remotes.
-		-- No fake RemoteEvent is created here.
+			return
 
-		if enabled then
-			print("RUSTED | Silent Aim enabled")
-		else
-			print("RUSTED | Silent Aim disabled")
+		end
+
+		if object:IsA("Model") then
+
+			task.defer(
+				function()
+
+					if IsNPC(object) then
+
+						AddNPCESP(
+							object
+						)
+
+					end
+
+				end
+			)
+
 		end
 
 	end
 )
 
-AddToggle(
-	CombatPage,
-	"Team Check",
-	"Ignore teammates",
-	"TeamCheck",
+workspace.DescendantRemoving:Connect(
+	function(object)
+
+		if object:IsA("Model") then
+
+			RemoveNPCESP(
+				object
+			)
+
+		end
+
+	end
+)
+
+--==================================================
+-- ESP UPDATE LOOP
+--==================================================
+
+local ESPTimer =
+	0
+
+RunService.Heartbeat:Connect(
+	function(deltaTime)
+
+		ESPTimer +=
+			deltaTime
+
+		-- Scan periodically instead of
+		-- scanning the entire workspace
+		-- every frame.
+
+		if ESPTimer >= 0.5 then
+
+			ESPTimer =
+				0
+
+			ScanPlayers()
+			ScanNPCs()
+
+		end
+
+		UpdateAllESP()
+
+	end
+)
+
+--==================================================
+-- INITIAL SCAN
+--==================================================
+
+task.defer(
 	function()
-		RefreshESP()
-	end
-)
 
-AddToggle(
-	CombatPage,
-	"Show FOV",
-	"Display targeting field of view",
-	"ShowFOV",
-	function()
-	end
-)
+		task.wait(
+			0.5
+		)
 
-AddToggle(
-	CombatPage,
-	"Snapline",
-	"Show target direction lines",
-	"Snapline",
-	function()
+		ScanPlayers()
+		ScanNPCs()
+
 	end
 )
 
 --==================================================
--- FOV CIRCLE
+-- END PART 2B/7
 --==================================================
 
-local FOVCircle = New("Frame",{
-
-	Name = "FOVCircle",
-
-	AnchorPoint = Vector2.new(.5,.5),
-
-	Position = UDim2.fromScale(.5,.5),
-
-	Size = UDim2.fromOffset(
-		S.FOVRadius*2,
-		S.FOVRadius*2
-	),
-
-	BackgroundTransparency = 1,
-
-	BorderSizePixel = 0,
-
-	Visible = false,
-
-	ZIndex = 5
-
-},Gui)
-
-Corner(FOVCircle,S.FOVRadius)
-
-local FOVStroke = Stroke(
-	FOVCircle,
-	COLORS.PURPLE,
-	1.5,
-	.15
-)
-
 --==================================================
--- FOV UPDATE
+--                 RUSTED v3.2
+--                  PART 3A/7
+--             TARGET SELECTOR + FOV
 --==================================================
 
-RunService.RenderStepped:Connect(function()
+--==================================================
+-- CAMERA
+--==================================================
 
-	if not FOVCircle.Parent then
-		return
-	end
+local Camera =
+	workspace.CurrentCamera
 
-	FOVCircle.Visible = S.ShowFOV
+--==================================================
+-- TARGET STATE
+--==================================================
 
-	FOVCircle.Size = UDim2.fromOffset(
-		S.FOVRadius*2,
-		S.FOVRadius*2
+local CurrentTarget =
+	nil
+
+local CurrentTargetRoot =
+	nil
+
+local CurrentTargetPart =
+	nil
+
+--==================================================
+-- FOV GUI
+--==================================================
+
+local FOVGui =
+	New(
+		"ScreenGui",
+		{
+
+			Name =
+				"RustedFOV",
+
+			ResetOnSpawn =
+				false,
+
+			IgnoreGuiInset =
+				true,
+
+			DisplayOrder =
+				998,
+
+			ZIndexBehavior =
+				Enum.ZIndexBehavior.Sibling
+
+		},
+		PlayerGui
 	)
 
-	local camera = workspace.CurrentCamera
+local FOVCircle =
+	New(
+		"Frame",
+		{
 
-	if camera then
+			Name =
+				"FOVCircle",
 
-		FOVCircle.Position = UDim2.fromOffset(
-			camera.ViewportSize.X/2,
-			camera.ViewportSize.Y/2
+			AnchorPoint =
+				Vector2.new(
+					.5,
+					.5
+				),
+
+			Position =
+				UDim2.fromScale(
+					.5,
+					.5
+				),
+
+			Size =
+				UDim2.fromOffset(
+					S.AimFOV * 2,
+					S.AimFOV * 2
+				),
+
+			BackgroundTransparency =
+				1,
+
+			BorderSizePixel =
+				0,
+
+			Visible =
+				false,
+
+			ZIndex =
+				2
+
+		},
+		FOVGui
+	)
+
+local FOVCorner =
+	Corner(
+		FOVCircle,
+		S.AimFOV
+	)
+
+local FOVStroke =
+	Stroke(
+		FOVCircle,
+		COLORS.PURPLE,
+		1.5,
+		.25
+	)
+
+--==================================================
+-- UPDATE FOV
+--==================================================
+
+local function UpdateFOVCircle()
+
+	local size =
+		math.clamp(
+			S.AimFOV,
+			20,
+			600
 		)
 
-	end
+	FOVCircle.Size =
+		UDim2.fromOffset(
+			size * 2,
+			size * 2
+		)
 
-end)
-
---==================================================
--- FOV SLIDER
---==================================================
-
-local function AddFOVSlider()
-
-	local row = New("Frame",{
-
-		Size = UDim2.new(1,0,0,60),
-
-		BackgroundColor3 = COLORS.ROW,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 13
-
-	},CombatPage)
-
-	Corner(row,9)
-
-	New("TextLabel",{
-
-		Size = UDim2.new(1,-60,0,18),
-
-		Position = UDim2.fromOffset(11,5),
-
-		BackgroundTransparency = 1,
-
-		Text = "FOV Radius",
-
-		TextColor3 = COLORS.TEXT,
-
-		Font = Enum.Font.GothamBold,
-
-		TextSize = 10,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-
-	},row)
-
-	local value = New("TextLabel",{
-
-		Size = UDim2.fromOffset(50,18),
-
-		Position = UDim2.new(1,-61,0,5),
-
-		BackgroundTransparency = 1,
-
-		Text = tostring(S.FOVRadius),
-
-		TextColor3 = COLORS.PURPLE,
-
-		Font = Enum.Font.GothamBold,
-
-		TextSize = 9,
-
-		TextXAlignment = Enum.TextXAlignment.Right,
-
-		ZIndex = 14
-
-	},row)
-
-	local bar = New("Frame",{
-
-		Size = UDim2.new(1,-22,0,5),
-
-		Position = UDim2.fromOffset(11,43),
-
-		BackgroundColor3 = COLORS.DARK,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 14
-
-	},row)
-
-	Corner(bar,3)
-
-	local fill = New("Frame",{
-
-		Size = UDim2.new(
-			S.FOVRadius/300,
-			0,1,0
-		),
-
-		BackgroundColor3 = COLORS.PURPLE,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 15
-
-	},bar)
-
-	Corner(fill,3)
-
-	local dragging = false
-
-	local function SetFOV(input)
-
-		local x = math.clamp(
-			input.Position.X -
-			bar.AbsolutePosition.X,
+	FOVCorner.CornerRadius =
+		UDim.new(
 			0,
-			bar.AbsoluteSize.X
+			size
 		)
 
-		local alpha = x/bar.AbsoluteSize.X
-
-		S.FOVRadius = math.floor(
-			50 + alpha*250
-		)
-
-		value.Text = tostring(S.FOVRadius)
-
-		fill.Size = UDim2.new(
-			(S.FOVRadius-50)/250,
-			0,1,0
-		)
-
-	end
-
-	bar.InputBegan:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
-
-			dragging = true
-			SetFOV(input)
-
-		end
-
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-
-		if dragging and (
-			input.UserInputType ==
-			Enum.UserInputType.MouseMovement
-			or input.UserInputType ==
-			Enum.UserInputType.Touch
-		) then
-
-			SetFOV(input)
-
-		end
-
-	end)
-
-	UIS.InputEnded:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
-
-			dragging = false
-
-		end
-
-	end)
+	FOVCircle.Visible =
+		S.AimAssist
 
 end
 
-AddFOVSlider()
+UpdateFOVCircle()
 
 --==================================================
--- INITIAL ESP
+-- CHARACTER TARGET PART
 --==================================================
 
-task.delay(.5,function()
-
-	if S.ESP
-		or S.Names
-		or S.Health
-		or S.Distance then
-
-		RefreshESP()
-
-	end
-
-end)
-
-print("RUSTED v3.1 | PART 2/4")
-
---==================================================
---              RUSTED v3.1 PART 3/4
---              MOVEMENT + MISC
---==================================================
-
---==================================================
--- TOGGLE
---==================================================
-
-local function AddToggle(parent,title,description,key,callback)
-
-	local row = New("TextButton",{
-		Size = UDim2.new(1,0,0,46),
-
-		BackgroundColor3 = COLORS.ROW,
-		BorderSizePixel = 0,
-
-		Text = "",
-		AutoButtonColor = false,
-
-		ZIndex = 13
-	},parent)
-
-	Corner(row,9)
-
-	local titleLabel = New("TextLabel",{
-		Size = UDim2.new(1,-65,0,19),
-		Position = UDim2.fromOffset(11,4),
-
-		BackgroundTransparency = 1,
-
-		Text = title,
-		TextColor3 = COLORS.TEXT,
-
-		Font = Enum.Font.GothamBold,
-		TextSize = 10,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-	},row)
-
-	New("TextLabel",{
-		Size = UDim2.new(1,-65,0,14),
-		Position = UDim2.fromOffset(11,24),
-
-		BackgroundTransparency = 1,
-
-		Text = description or "",
-		TextColor3 = COLORS.SUB,
-
-		Font = Enum.Font.Gotham,
-		TextSize = 7,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-	},row)
-
-	local toggle = New("Frame",{
-		Size = UDim2.fromOffset(36,19),
-		Position = UDim2.new(1,-48,.5,-9),
-
-		BackgroundColor3 = COLORS.DARK,
-		BorderSizePixel = 0,
-
-		ZIndex = 14
-	},row)
-
-	Corner(toggle,10)
-
-	local knob = New("Frame",{
-		Size = UDim2.fromOffset(13,13),
-		Position = UDim2.fromOffset(3,3),
-
-		BackgroundColor3 = COLORS.WHITE,
-		BorderSizePixel = 0,
-
-		ZIndex = 15
-	},toggle)
-
-	Corner(knob,7)
-
-	local function Update(value)
-
-		S[key] = value
-
-		if value then
-
-			Tween(toggle,.16,Enum.EasingStyle.Quart,nil,{
-				BackgroundColor3 = COLORS.PURPLE
-			})
-
-			Tween(knob,.2,Enum.EasingStyle.Back,nil,{
-				Position = UDim2.new(1,-16,.5,-6)
-			})
-
-		else
-
-			Tween(toggle,.16,Enum.EasingStyle.Quart,nil,{
-				BackgroundColor3 = COLORS.DARK
-			})
-
-			Tween(knob,.16,Enum.EasingStyle.Quart,nil,{
-				Position = UDim2.fromOffset(3,3)
-			})
-
-		end
-
-		if callback then
-			task.spawn(callback,value)
-		end
-
-	end
-
-	row.Activated:Connect(function()
-		Update(not S[key])
-	end)
-
-	row.MouseEnter:Connect(function()
-
-		Tween(row,.1,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.HOVER
-		})
-
-	end)
-
-	row.MouseLeave:Connect(function()
-
-		Tween(row,.1,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.ROW
-		})
-
-	end)
-
-	Update(S[key])
-
-	return row
-end
-
---==================================================
--- SLIDER
---==================================================
-
-local function AddSlider(
-	parent,
-	title,
-	description,
-	key,
-	minValue,
-	maxValue,
-	callback
+local function GetAimPart(
+	character
 )
-
-	local row = New("Frame",{
-
-		Size = UDim2.new(1,0,0,60),
-
-		BackgroundColor3 = COLORS.ROW,
-		BorderSizePixel = 0,
-
-		ZIndex = 13
-
-	},parent)
-
-	Corner(row,9)
-
-	New("TextLabel",{
-
-		Size = UDim2.new(1,-70,0,18),
-		Position = UDim2.fromOffset(11,5),
-
-		BackgroundTransparency = 1,
-
-		Text = title,
-		TextColor3 = COLORS.TEXT,
-
-		Font = Enum.Font.GothamBold,
-		TextSize = 10,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-
-	},row)
-
-	local valueLabel = New("TextLabel",{
-
-		Size = UDim2.fromOffset(55,18),
-		Position = UDim2.new(1,-65,0,5),
-
-		BackgroundTransparency = 1,
-
-		TextColor3 = COLORS.PURPLE,
-
-		Font = Enum.Font.GothamBold,
-		TextSize = 9,
-
-		TextXAlignment = Enum.TextXAlignment.Right,
-
-		ZIndex = 14
-
-	},row)
-
-	New("TextLabel",{
-
-		Size = UDim2.new(1,-22,0,14),
-		Position = UDim2.fromOffset(11,23),
-
-		BackgroundTransparency = 1,
-
-		Text = description or "",
-		TextColor3 = COLORS.SUB,
-
-		Font = Enum.Font.Gotham,
-		TextSize = 7,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-
-	},row)
-
-	local bar = New("Frame",{
-
-		Size = UDim2.new(1,-22,0,5),
-		Position = UDim2.fromOffset(11,44),
-
-		BackgroundColor3 = COLORS.DARK,
-		BorderSizePixel = 0,
-
-		ZIndex = 14
-
-	},row)
-
-	Corner(bar,3)
-
-	local fill = New("Frame",{
-
-		Size = UDim2.new(0,0,1,0),
-
-		BackgroundColor3 = COLORS.PURPLE,
-		BorderSizePixel = 0,
-
-		ZIndex = 15
-
-	},bar)
-
-	Corner(fill,3)
-
-	local dragging = false
-
-	local function SetValue(value)
-
-		value = math.clamp(
-			math.floor(value),
-			minValue,
-			maxValue
-		)
-
-		S[key] = value
-
-		local alpha =
-			(value-minValue) /
-			(maxValue-minValue)
-
-		valueLabel.Text = tostring(value)
-
-		Tween(fill,.1,Enum.EasingStyle.Quart,nil,{
-			Size = UDim2.new(alpha,0,1,0)
-		})
-
-		if callback then
-			task.spawn(callback,value)
-		end
-
-	end
-
-	local function FromInput(input)
-
-		local width = bar.AbsoluteSize.X
-
-		if width <= 0 then
-			return
-		end
-
-		local x = math.clamp(
-			input.Position.X -
-			bar.AbsolutePosition.X,
-			0,
-			width
-		)
-
-		local alpha = x/width
-
-		SetValue(
-			minValue +
-			(maxValue-minValue)*alpha
-		)
-
-	end
-
-	bar.InputBegan:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
-
-			dragging = true
-
-			FromInput(input)
-
-		end
-
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-
-		if not dragging then
-			return
-		end
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseMovement
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
-
-			FromInput(input)
-
-		end
-
-	end)
-
-	UIS.InputEnded:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or input.UserInputType ==
-			Enum.UserInputType.Touch then
-
-			dragging = false
-
-		end
-
-	end)
-
-	SetValue(S[key])
-
-	return row
-end
-
---==================================================
--- MOVEMENT
---==================================================
-
-AddSection(
-	MovementPage,
-	"MOVEMENT"
-)
-
-AddToggle(
-	MovementPage,
-	"Speed Hack",
-	"Change walking speed",
-	"SpeedHack",
-	function(enabled)
-
-		local humanoid = GetHumanoid()
-
-		if humanoid then
-
-			humanoid.WalkSpeed =
-				enabled and S.Speed or 16
-
-		end
-
-	end
-)
-
-AddSlider(
-	MovementPage,
-	"Speed",
-	"Walking speed",
-	"Speed",
-	16,
-	100,
-	function(value)
-
-		if not S.SpeedHack then
-			return
-		end
-
-		local humanoid = GetHumanoid()
-
-		if humanoid then
-			humanoid.WalkSpeed = value
-		end
-
-	end
-)
-
-AddToggle(
-	MovementPage,
-	"Jump Power",
-	"Change jump power",
-	"Jump",
-	function(enabled)
-
-		local humanoid = GetHumanoid()
-
-		if not humanoid then
-			return
-		end
-
-		if humanoid.UseJumpPower then
-
-			humanoid.JumpPower =
-				enabled and S.JumpPower or 50
-
-		else
-
-			humanoid.JumpHeight =
-				enabled and 12 or 7.2
-
-		end
-
-	end
-)
-
-AddSlider(
-	MovementPage,
-	"Jump Power",
-	"Jump strength",
-	"JumpPower",
-	50,
-	150,
-	function(value)
-
-		if not S.Jump then
-			return
-		end
-
-		local humanoid = GetHumanoid()
-
-		if humanoid and humanoid.UseJumpPower then
-			humanoid.JumpPower = value
-		end
-
-	end
-)
-
-AddToggle(
-	MovementPage,
-	"Noclip",
-	"Walk through objects",
-	"Noclip",
-	function()
-	end
-)
-
---==================================================
--- NOCLIP
---==================================================
-
-RunService.Stepped:Connect(function()
-
-	if not S.Noclip then
-		return
-	end
-
-	local character = GetCharacter()
 
 	if not character then
-		return
+		return nil
 	end
 
-	for _,object in ipairs(
+	-- Prefer Head for more accurate
+	-- visual target selection.
+
+	local head =
+		character:
+			FindFirstChild(
+				"Head"
+			)
+
+	if head
+		and head:IsA("BasePart") then
+
+		return head
+
+	end
+
+	local root =
+		GetRoot(
+			character
+		)
+
+	if root then
+		return root
+	end
+
+	return character:
+		FindFirstChildWhichIsA(
+			"BasePart"
+		)
+
+end
+
+--==================================================
+-- VISIBILITY CHECK
+--==================================================
+
+local function IsVisible(
+	part,
+	character
+)
+
+	if not S.AimVisibleOnly then
+		return true
+	end
+
+	if not part
+		or not character then
+
+		return false
+
+	end
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera then
+		return false
+	end
+
+	local origin =
+		Camera.CFrame.Position
+
+	local direction =
+		part.Position -
+		origin
+
+	local params =
+		RaycastParams.new()
+
+	params.FilterType =
+		Enum.RaycastFilterType.Exclude
+
+	local ignoreList = {
+		Player.Character
+	}
+
+	-- Ignore the target's own
+	-- character only after the
+	-- ray reaches it.
+
+	for _, object in ipairs(
 		character:GetDescendants()
 	) do
 
 		if object:IsA("BasePart") then
-			object.CanCollide = false
+
+			table.insert(
+				ignoreList,
+				object
+			)
+
 		end
 
 	end
 
-end)
+	params.FilterDescendantsInstances =
+		ignoreList
+
+	local result =
+		workspace:Raycast(
+			origin,
+			direction,
+			params
+		)
+
+	-- Nothing blocked the ray.
+
+	if not result then
+		return true
+	end
+
+	-- Some games have transparent
+	-- helper parts. Continue through
+	-- fully transparent parts.
+
+	local hit =
+		result.Instance
+
+	if hit
+		and hit:IsA("BasePart")
+		and hit.Transparency >= 1 then
+
+		return true
+	end
+
+	return false
+end
 
 --==================================================
--- CHARACTER UPDATE
+-- SCREEN POSITION
 --==================================================
 
-Player.CharacterAdded:Connect(function(character)
+local function GetScreenPosition(
+	part
+)
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera
+		or not part then
+
+		return nil, false
+	end
+
+	local position,
+		onScreen =
+		Camera:WorldToViewportPoint(
+			part.Position
+		)
+
+	return
+		Vector2.new(
+			position.X,
+			position.Y
+		),
+		onScreen
+end
+
+--==================================================
+-- TARGET VALIDATION
+--==================================================
+
+local function IsTargetValid(
+	character
+)
+
+	if not character
+		or not character.Parent then
+
+		return false
+	end
 
 	local humanoid =
-		character:WaitForChild(
-			"Humanoid",
-			5
+		character:
+			FindFirstChildOfClass(
+				"Humanoid"
+			)
+
+	local root =
+		GetRoot(
+			character
 		)
+
+	if not humanoid
+		or not root then
+
+		return false
+	end
+
+	if humanoid.Health <= 0 then
+		return false
+	end
+
+	return true
+end
+
+--==================================================
+-- PLAYER TARGETS
+--==================================================
+
+local function GetPlayerTargets()
+
+	local targets = {}
+
+	if not S.AimPlayers then
+		return targets
+	end
+
+	for _, player in ipairs(
+		Players:GetPlayers()
+	) do
+
+		if IsValidPlayer(player) then
+
+			local character =
+				GetTargetCharacter(
+					player
+				)
+
+			if character
+				and IsTargetValid(
+					character
+				) then
+
+				table.insert(
+					targets,
+					{
+						Character =
+							character,
+
+						Player =
+							player,
+
+						IsNPC =
+							false
+					}
+				)
+
+			end
+
+		end
+
+	end
+
+	return targets
+end
+
+--==================================================
+-- NPC TARGETS
+--==================================================
+
+local function GetNPCTargets()
+
+	local targets = {}
+
+	if not S.AimNPC then
+		return targets
+	end
+
+	for model in pairs(
+		NPCObjects
+	) do
+
+		if IsNPC(model)
+			and IsTargetValid(model) then
+
+			table.insert(
+				targets,
+				{
+					Character =
+						model,
+
+					Player =
+						nil,
+
+					IsNPC =
+						true
+				}
+			)
+
+		end
+
+	end
+
+	return targets
+end
+
+--==================================================
+-- COLLECT TARGETS
+--==================================================
+
+local function GetAllTargets()
+
+	local targets =
+		GetPlayerTargets()
+
+	local npcs =
+		GetNPCTargets()
+
+	for _, target in ipairs(
+		npcs
+	) do
+
+		table.insert(
+			targets,
+			target
+		)
+
+	end
+
+	return targets
+end
+
+--==================================================
+-- FIND CLOSEST TARGET
+--==================================================
+
+local function FindClosestTarget()
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera then
+		return nil
+	end
+
+	local viewport =
+		Camera.ViewportSize
+
+	local screenCenter =
+		Vector2.new(
+			viewport.X / 2,
+			viewport.Y / 2
+		)
+
+	local maxDistance =
+		math.clamp(
+			S.AimFOV,
+			20,
+			600
+		)
+
+	local closest =
+		nil
+
+	local closestDistance =
+		math.huge
+
+	for _, target in ipairs(
+		GetAllTargets()
+	) do
+
+		local character =
+			target.Character
+
+		local part =
+			GetAimPart(
+				character
+			)
+
+		if part then
+
+			local screenPosition,
+				onScreen =
+				GetScreenPosition(
+					part
+				)
+
+			if onScreen then
+
+				local distance =
+					(
+						screenPosition -
+						screenCenter
+					).Magnitude
+
+				if distance <=
+					maxDistance then
+
+					if IsVisible(
+						part,
+						character
+					) then
+
+						if distance <
+							closestDistance then
+
+							closestDistance =
+								distance
+
+							closest =
+								target
+
+							closest.AimPart =
+								part
+
+						end
+
+					end
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return closest
+end
+
+--==================================================
+-- TARGET UPDATE
+--==================================================
+
+local function UpdateTarget()
+
+	if not S.AimAssist then
+
+		CurrentTarget =
+			nil
+
+		CurrentTargetRoot =
+			nil
+
+		CurrentTargetPart =
+			nil
+
+		return
+
+	end
+
+	local target =
+		FindClosestTarget()
+
+	if target then
+
+		CurrentTarget =
+			target
+
+		CurrentTargetRoot =
+			GetRoot(
+				target.Character
+			)
+
+		CurrentTargetPart =
+			target.AimPart
+
+	else
+
+		CurrentTarget =
+			nil
+
+		CurrentTargetRoot =
+			nil
+
+		CurrentTargetPart =
+			nil
+
+	end
+
+end
+
+--==================================================
+-- TARGET UPDATE LOOP
+--==================================================
+
+RunService.RenderStepped:Connect(
+	function()
+
+		UpdateFOVCircle()
+
+		UpdateTarget()
+
+	end
+)
+
+--==================================================
+-- END PART 3A/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 3B/7
+--                SNAPLINE SYSTEM
+--==================================================
+
+--==================================================
+-- SNAPLINE GUI
+--==================================================
+
+local SnapGui =
+	New(
+		"ScreenGui",
+		{
+
+			Name =
+				"RustedSnapline",
+
+			ResetOnSpawn =
+				false,
+
+			IgnoreGuiInset =
+				true,
+
+			DisplayOrder =
+				997,
+
+			ZIndexBehavior =
+				Enum.ZIndexBehavior.Sibling
+
+		},
+		PlayerGui
+	)
+
+--==================================================
+-- LINE
+--==================================================
+
+local SnapLine =
+	New(
+		"Frame",
+		{
+
+			Name =
+				"SnapLine",
+
+			AnchorPoint =
+				Vector2.new(
+					0,
+					0.5
+				),
+
+			Position =
+				UDim2.fromOffset(
+					0,
+					0
+				),
+
+			Size =
+				UDim2.fromOffset(
+					0,
+					2
+				),
+
+			BackgroundColor3 =
+				COLORS.PURPLE,
+
+			BorderSizePixel =
+				0,
+
+			Visible =
+				false,
+
+			ZIndex =
+				5
+
+		},
+		SnapGui
+	)
+
+Corner(
+	SnapLine,
+	2
+)
+
+--==================================================
+-- TARGET DOT
+--==================================================
+
+local TargetDot =
+	New(
+		"Frame",
+		{
+
+			Name =
+				"TargetDot",
+
+			AnchorPoint =
+				Vector2.new(
+					.5,
+					.5
+				),
+
+			Size =
+				UDim2.fromOffset(
+					7,
+					7
+				),
+
+			BackgroundColor3 =
+				COLORS.WHITE,
+
+			BorderSizePixel =
+				0,
+
+			Visible =
+				false,
+
+			ZIndex =
+				6
+
+		},
+		SnapGui
+	)
+
+Corner(
+	TargetDot,
+	5
+)
+
+Stroke(
+	TargetDot,
+	COLORS.PURPLE,
+	1,
+	.1
+)
+
+--==================================================
+-- LINE UPDATE
+--==================================================
+
+local function UpdateSnapline()
+
+	if not S.Snapline
+		or not S.AimAssist then
+
+		SnapLine.Visible =
+			false
+
+		TargetDot.Visible =
+			false
+
+		return
+
+	end
+
+	if not CurrentTarget
+		or not CurrentTargetPart then
+
+		SnapLine.Visible =
+			false
+
+		TargetDot.Visible =
+			false
+
+		return
+
+	end
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera then
+
+		SnapLine.Visible =
+			false
+
+		TargetDot.Visible =
+			false
+
+		return
+
+	end
+
+	local viewport =
+		Camera.ViewportSize
+
+	local center =
+		Vector2.new(
+			viewport.X / 2,
+			viewport.Y / 2
+		)
+
+	local targetPosition,
+		onScreen =
+		Camera:WorldToViewportPoint(
+			CurrentTargetPart.Position
+		)
+
+	if not onScreen
+		or targetPosition.Z <= 0 then
+
+		SnapLine.Visible =
+			false
+
+		TargetDot.Visible =
+			false
+
+		return
+
+	end
+
+	local target =
+		Vector2.new(
+			targetPosition.X,
+			targetPosition.Y
+		)
+
+	local difference =
+		target -
+		center
+
+	local length =
+		difference.Magnitude
+
+	if length < 1 then
+
+		SnapLine.Visible =
+			false
+
+		TargetDot.Visible =
+			true
+
+		TargetDot.Position =
+			UDim2.fromOffset(
+				target.X,
+				target.Y
+			)
+
+		return
+
+	end
+
+	local angle =
+		math.deg(
+			math.atan2(
+				difference.Y,
+				difference.X
+			)
+		)
+
+	--==============================================
+	-- DRAW FROM SCREEN CENTER
+	--==============================================
+
+	SnapLine.AnchorPoint =
+		Vector2.new(
+			0,
+			0.5
+		)
+
+	SnapLine.Position =
+		UDim2.fromOffset(
+			center.X,
+			center.Y
+		)
+
+	SnapLine.Size =
+		UDim2.fromOffset(
+			length,
+			2
+		)
+
+	SnapLine.Rotation =
+		angle
+
+	SnapLine.Visible =
+		true
+
+	--==============================================
+	-- TARGET DOT
+	--==============================================
+
+	TargetDot.Position =
+		UDim2.fromOffset(
+			target.X,
+			target.Y
+		)
+
+	TargetDot.Visible =
+		true
+
+end
+
+--==================================================
+-- SNAPLINE LOOP
+--==================================================
+
+RunService.RenderStepped:Connect(
+	function()
+
+		UpdateSnapline()
+
+	end
+)
+
+--==================================================
+-- SNAPLINE COLOR UPDATE
+--==================================================
+
+local function UpdateSnaplineColor()
+
+	SnapLine.BackgroundColor3 =
+		COLORS.PURPLE
+
+end
+
+UpdateSnaplineColor()
+
+--==================================================
+-- END PART 3B/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 4/7
+--                 AIM ASSIST
+--==================================================
+
+--==================================================
+-- AIM SETTINGS
+--==================================================
+
+local AimConnection =
+	nil
+
+local LastAimTarget =
+	nil
+
+--==================================================
+-- GET AIM POSITION
+--==================================================
+
+local function GetAimPosition()
+
+	if not CurrentTarget then
+		return nil
+	end
+
+	if not CurrentTarget.Character then
+		return nil
+	end
+
+	local character =
+		CurrentTarget.Character
+
+	if not IsTargetValid(
+		character
+	) then
+
+		return nil
+
+	end
+
+	local part =
+		CurrentTargetPart
+
+	if not part
+		or not part.Parent then
+
+		part =
+			GetAimPart(
+				character
+			)
+
+	end
+
+	if not part then
+		return nil
+	end
+
+	-- Re-check visibility so Aim Assist
+	-- does not keep tracking a target
+	-- that became hidden.
+
+	if S.AimVisibleOnly then
+
+		if not IsVisible(
+			part,
+			character
+		) then
+
+			return nil
+
+		end
+
+	end
+
+	return part.Position
+end
+
+--==================================================
+-- AIM CAMERA
+--==================================================
+
+local function UpdateAim()
+
+	if not S.AimAssist then
+
+		LastAimTarget =
+			nil
+
+		return
+
+	end
+
+	local position =
+		GetAimPosition()
+
+	if not position then
+
+		LastAimTarget =
+			nil
+
+		return
+
+	end
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera then
+		return
+	end
+
+	-- Keep the player's current camera
+	-- orientation while gently pointing
+	-- toward the selected target.
+
+	local cameraPosition =
+		Camera.CFrame.Position
+
+	local direction =
+		position -
+		cameraPosition
+
+	if direction.Magnitude <= 0.01 then
+		return
+	end
+
+	local targetCFrame =
+		CFrame.lookAt(
+			cameraPosition,
+			position
+		)
+
+	-- Small smoothing value prevents
+	-- an excessively abrupt camera jump.
+
+	local smooth =
+		0.18
+
+	Camera.CFrame =
+		Camera.CFrame:Lerp(
+			targetCFrame,
+			smooth
+		)
+
+	LastAimTarget =
+		CurrentTarget
+
+end
+
+--==================================================
+-- START AIM
+--==================================================
+
+local function StartAim()
+
+	if AimConnection then
+		return
+	end
+
+	AimConnection =
+		RunService.RenderStepped:Connect(
+			function()
+
+				UpdateAim()
+
+			end
+		)
+
+end
+
+--==================================================
+-- STOP AIM
+--==================================================
+
+local function StopAim()
+
+	if AimConnection then
+
+		AimConnection:Disconnect()
+
+		AimConnection =
+			nil
+
+	end
+
+	LastAimTarget =
+		nil
+
+end
+
+--==================================================
+-- AIM STATE
+--==================================================
+
+local function UpdateAimState()
+
+	if S.AimAssist then
+
+		StartAim()
+
+	else
+
+		StopAim()
+
+	end
+
+end
+
+--==================================================
+-- MONITOR AIM TOGGLE
+--==================================================
+
+task.spawn(
+	function()
+
+		local previous =
+			S.AimAssist
+
+		while Gui.Parent do
+
+			if previous ~=
+				S.AimAssist then
+
+				previous =
+					S.AimAssist
+
+				UpdateAimState()
+
+			end
+
+			task.wait(
+				0.05
+			)
+
+		end
+
+		StopAim()
+
+	end
+)
+
+--==================================================
+-- CAMERA CHANGE SUPPORT
+--==================================================
+
+workspace:GetPropertyChangedSignal(
+	"CurrentCamera"
+):Connect(
+	function()
+
+		Camera =
+			workspace.CurrentCamera
+
+	end
+)
+
+--==================================================
+-- CHARACTER RESPAWN SUPPORT
+--==================================================
+
+Player.CharacterAdded:Connect(
+	function()
+
+		CurrentTarget =
+			nil
+
+		CurrentTargetRoot =
+			nil
+
+		CurrentTargetPart =
+			nil
+
+		LastAimTarget =
+			nil
+
+	end
+)
+
+--==================================================
+-- TARGET INVALIDATION
+--==================================================
+
+RunService.Heartbeat:Connect(
+	function()
+
+		if not S.AimAssist then
+			return
+		end
+
+		if not CurrentTarget then
+			return
+		end
+
+		local character =
+			CurrentTarget.Character
+
+		if not character
+			or not IsTargetValid(
+				character
+			) then
+
+			CurrentTarget =
+				nil
+
+			CurrentTargetRoot =
+				nil
+
+			CurrentTargetPart =
+				nil
+
+			LastAimTarget =
+				nil
+
+		end
+
+	end
+)
+
+--==================================================
+-- INITIALIZE
+--==================================================
+
+UpdateAimState()
+
+--==================================================
+-- END PART 4/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 5/7
+--          MOVEMENT + CAMERA SYSTEM
+--==================================================
+
+--==================================================
+-- ORIGINAL VALUES
+--==================================================
+
+local OriginalWalkSpeed =
+	16
+
+local OriginalJumpPower =
+	50
+
+local OriginalUseJumpPower =
+	true
+
+local OriginalCameraFOV =
+	70
+
+--==================================================
+-- CHARACTER VALUES
+--==================================================
+
+local function SaveCharacterValues()
+
+	local humanoid =
+		GetHumanoid()
 
 	if not humanoid then
 		return
 	end
 
-	task.wait(.15)
+	OriginalWalkSpeed =
+		humanoid.WalkSpeed
+
+	OriginalJumpPower =
+		humanoid.JumpPower
+
+	OriginalUseJumpPower =
+		humanoid.UseJumpPower
+
+end
+
+SaveCharacterValues()
+
+--==================================================
+-- FOV
+--==================================================
+
+local function SaveCameraFOV()
+
+	Camera =
+		workspace.CurrentCamera
+
+	if Camera then
+
+		OriginalCameraFOV =
+			Camera.FieldOfView
+
+	end
+
+end
+
+SaveCameraFOV()
+
+--==================================================
+-- APPLY SPEED
+--==================================================
+
+local function UpdateSpeed()
+
+	local humanoid =
+		GetHumanoid()
+
+	if not humanoid then
+		return
+	end
 
 	if S.SpeedHack then
-		humanoid.WalkSpeed = S.Speed
+
+		humanoid.WalkSpeed =
+			math.clamp(
+				S.Speed,
+				0,
+				250
+			)
+
+	else
+
+		humanoid.WalkSpeed =
+			OriginalWalkSpeed
+
 	end
 
-	if S.Jump and humanoid.UseJumpPower then
-		humanoid.JumpPower = S.JumpPower
+end
+
+--==================================================
+-- APPLY JUMP
+--==================================================
+
+local function UpdateJump()
+
+	local humanoid =
+		GetHumanoid()
+
+	if not humanoid then
+		return
 	end
 
-end)
+	if S.Jump then
+
+		humanoid.UseJumpPower =
+			true
+
+		humanoid.JumpPower =
+			math.clamp(
+				S.JumpPower,
+				0,
+				1000
+			)
+
+	else
+
+		humanoid.UseJumpPower =
+			OriginalUseJumpPower
+
+		humanoid.JumpPower =
+			OriginalJumpPower
+
+	end
+
+end
 
 --==================================================
--- MISC
+-- NOCLIP
 --==================================================
 
-AddSection(
-	MiscPage,
-	"CAMERA"
+local NoclipConnection =
+	nil
+
+local function SetNoclip(
+	state
 )
 
-AddToggle(
-	MiscPage,
-	"FOV Changer",
-	"Change camera field of view",
-	"FOVChanger",
-	function(enabled)
+	local character =
+		GetCharacter()
 
-		local camera =
-			workspace.CurrentCamera
+	if not character then
+		return
+	end
 
-		if camera then
+	for _, object in ipairs(
+		character:GetDescendants()
+	) do
 
-			camera.FieldOfView =
-				enabled and S.FOV or 70
+		if object:IsA(
+			"BasePart"
+		) then
+
+			object.CanCollide =
+				not state
 
 		end
 
 	end
+
+end
+
+local function StartNoclip()
+
+	if NoclipConnection then
+		return
+	end
+
+	NoclipConnection =
+		RunService.Stepped:Connect(
+			function()
+
+				if not S.Noclip then
+
+					SetNoclip(
+						false
+					)
+
+					return
+
+				end
+
+				SetNoclip(
+					true
+				)
+
+			end
+		)
+
+end
+
+local function StopNoclip()
+
+	if NoclipConnection then
+
+		NoclipConnection:Disconnect()
+
+		NoclipConnection =
+			nil
+
+	end
+
+	SetNoclip(
+		false
+	)
+
+end
+
+local function UpdateNoclip()
+
+	if S.Noclip then
+
+		StartNoclip()
+
+	else
+
+		StopNoclip()
+
+	end
+
+end
+
+--==================================================
+-- CAMERA FOV
+--==================================================
+
+local function UpdateCameraFOV()
+
+	Camera =
+		workspace.CurrentCamera
+
+	if not Camera then
+		return
+	end
+
+	if S.FOVChanger then
+
+		Camera.FieldOfView =
+			math.clamp(
+				S.FOV,
+				40,
+				120
+			)
+
+	else
+
+		Camera.FieldOfView =
+			OriginalCameraFOV
+
+	end
+
+end
+
+--==================================================
+-- CHARACTER RESPAWN
+--==================================================
+
+Player.CharacterAdded:Connect(
+	function(character)
+
+		task.wait(
+			0.5
+		)
+
+		local humanoid =
+			character:
+				FindFirstChildOfClass(
+					"Humanoid"
+				)
+
+		if humanoid then
+
+			OriginalWalkSpeed =
+				humanoid.WalkSpeed
+
+			OriginalJumpPower =
+				humanoid.JumpPower
+
+			OriginalUseJumpPower =
+				humanoid.UseJumpPower
+
+		end
+
+		UpdateSpeed()
+		UpdateJump()
+		UpdateNoclip()
+
+	end
 )
 
-AddSlider(
-	MiscPage,
-	"Field Of View",
-	"Camera FOV",
-	"FOV",
-	50,
-	120,
-	function(value)
+--==================================================
+-- MOVEMENT LOOP
+--==================================================
 
-		if not S.FOVChanger then
+local MovementTimer =
+	0
+
+RunService.Heartbeat:Connect(
+	function(deltaTime)
+
+		MovementTimer +=
+			deltaTime
+
+		if MovementTimer <
+			0.05 then
+
 			return
+
 		end
 
-		local camera =
-			workspace.CurrentCamera
+		MovementTimer =
+			0
 
-		if camera then
-			camera.FieldOfView = value
-		end
+		UpdateSpeed()
+		UpdateJump()
+		UpdateNoclip()
 
 	end
 )
+
+--==================================================
+-- CAMERA LOOP
+--==================================================
+
+RunService.RenderStepped:Connect(
+	function()
+
+		UpdateCameraFOV()
+
+	end
+)
+
+--==================================================
+-- INITIAL STATE
+--==================================================
+
+UpdateSpeed()
+UpdateJump()
+UpdateNoclip()
+UpdateCameraFOV()
+
+--==================================================
+-- END PART 5/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 6/7
+--              MISC SYSTEM
+--==================================================
 
 --==================================================
 -- FULLBRIGHT
 --==================================================
 
-AddSection(
-	MiscPage,
-	"LIGHTING"
+local OriginalLighting = {
+	Brightness = Lighting.Brightness,
+	ClockTime = Lighting.ClockTime,
+	FogEnd = Lighting.FogEnd,
+	GlobalShadows = Lighting.GlobalShadows,
+	Ambient = Lighting.Ambient,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+}
+
+local function UpdateFullbright()
+
+	if S.Fullbright then
+
+		Lighting.Brightness =
+			2
+
+		Lighting.ClockTime =
+			14
+
+		Lighting.FogEnd =
+			100000
+
+		Lighting.GlobalShadows =
+			false
+
+		Lighting.Ambient =
+			Color3.new(
+				1,
+				1,
+				1
+			)
+
+		Lighting.OutdoorAmbient =
+			Color3.new(
+				1,
+				1,
+				1
+			)
+
+	else
+
+		Lighting.Brightness =
+			OriginalLighting.Brightness
+
+		Lighting.ClockTime =
+			OriginalLighting.ClockTime
+
+		Lighting.FogEnd =
+			OriginalLighting.FogEnd
+
+		Lighting.GlobalShadows =
+			OriginalLighting.GlobalShadows
+
+		Lighting.Ambient =
+			OriginalLighting.Ambient
+
+		Lighting.OutdoorAmbient =
+			OriginalLighting.OutdoorAmbient
+
+	end
+
+end
+
+
+--==================================================
+-- NEON GUN
+--==================================================
+
+local NeonParts = {}
+
+local function GetEquippedTool()
+
+	local character =
+		GetCharacter()
+
+	if not character then
+		return nil
+	end
+
+	for _, object in ipairs(
+		character:GetChildren()
+	) do
+
+		if object:IsA("Tool") then
+			return object
+		end
+
+	end
+
+	return nil
+
+end
+
+
+local function SaveNeonPart(
+	part
 )
 
-AddToggle(
-	MiscPage,
-	"Fullbright",
-	"Improve visibility",
-	"Fullbright",
-	function(enabled)
+	if NeonParts[part] then
+		return
+	end
 
-		if enabled then
+	NeonParts[part] = {
+		Material = part.Material,
+		Color = part.Color,
+		Reflectance = part.Reflectance,
+	}
 
-			Lighting.Brightness = 2
-			Lighting.ClockTime = 14
-			Lighting.FogEnd = 100000
-			Lighting.GlobalShadows = false
+end
 
-		else
 
-			Lighting.Brightness = 1
-			Lighting.GlobalShadows = true
+local function ApplyNeonToTool(
+	tool
+)
+
+	if not tool then
+		return
+	end
+
+	for _, object in ipairs(
+		tool:GetDescendants()
+	) do
+
+		if object:IsA(
+			"BasePart"
+		) then
+
+			SaveNeonPart(
+				object
+			)
+
+			object.Material =
+				Enum.Material.Neon
+
+			object.Color =
+				COLORS.PURPLE
+
+			object.Reflectance =
+				0.05
 
 		end
 
 	end
-)
 
---==================================================
--- NEON GUNS
---==================================================
+end
 
-AddToggle(
-	MiscPage,
-	"Neon Guns",
-	"Highlight weapon tools",
-	"NeonGuns",
-	function(enabled)
 
-		local function UpdateTool(tool)
+local function RestoreNeon()
 
-			if not tool:IsA("Tool") then
-				return
-			end
+	for part, data in pairs(
+		NeonParts
+	) do
 
-			local old =
-				tool:FindFirstChild(
-					"RustedNeon"
-				)
+		if part and
+			part.Parent then
 
-			if enabled then
+			part.Material =
+				data.Material
 
-				if old then
-					return
-				end
+			part.Color =
+				data.Color
 
-				local highlight =
-					Instance.new("Highlight")
-
-				highlight.Name =
-					"RustedNeon"
-
-				highlight.FillColor =
-					COLORS.PURPLE
-
-				highlight.OutlineColor =
-					COLORS.WHITE
-
-				highlight.FillTransparency =
-					.35
-
-				highlight.OutlineTransparency =
-					0
-
-				highlight.DepthMode =
-					Enum.HighlightDepthMode.AlwaysOnTop
-
-				highlight.Parent = tool
-
-			else
-
-				if old then
-					old:Destroy()
-				end
-
-			end
-
-		end
-
-		local character = GetCharacter()
-
-		if character then
-
-			for _,object in ipairs(
-				character:GetChildren()
-			) do
-
-				UpdateTool(object)
-
-			end
-
-		end
-
-		for _,object in ipairs(
-			Player.Backpack:GetChildren()
-		) do
-
-			UpdateTool(object)
+			part.Reflectance =
+				data.Reflectance
 
 		end
 
 	end
-)
 
---==================================================
--- NEW WEAPONS
---==================================================
+	table.clear(
+		NeonParts
+	)
 
-Player.Backpack.ChildAdded:Connect(function(tool)
+end
+
+
+local LastNeonTool =
+	nil
+
+
+local function UpdateNeonGun()
 
 	if not S.NeonGuns then
+
+		RestoreNeon()
+
+		LastNeonTool =
+			nil
+
 		return
+
 	end
 
-	if not tool:IsA("Tool") then
-		return
+	local tool =
+		GetEquippedTool()
+
+	if tool ~= LastNeonTool then
+
+		RestoreNeon()
+
+		LastNeonTool =
+			tool
+
 	end
 
-	task.wait(.05)
+	if tool then
 
-	if tool:FindFirstChild("RustedNeon") then
-		return
+		ApplyNeonToTool(
+			tool
+		)
+
 	end
 
-	local highlight =
-		Instance.new("Highlight")
+end
 
-	highlight.Name = "RustedNeon"
-
-	highlight.FillColor =
-		COLORS.PURPLE
-
-	highlight.OutlineColor =
-		COLORS.WHITE
-
-	highlight.FillTransparency = .35
-	highlight.OutlineTransparency = 0
-
-	highlight.DepthMode =
-		Enum.HighlightDepthMode.AlwaysOnTop
-
-	highlight.Parent = tool
-
-end)
 
 --==================================================
--- FOV LOOP
+-- CUSTOM HANDS
 --==================================================
 
-RunService.RenderStepped:Connect(function()
+local HandsModel =
+	nil
 
-	if not S.FOVChanger then
-		return
-	end
+local OriginalHandsPivot =
+	nil
+
+local function FindHandsModel()
 
 	local camera =
 		workspace.CurrentCamera
 
-	if camera then
-
-		if math.abs(
-			camera.FieldOfView-S.FOV
-		) > .1 then
-
-			camera.FieldOfView = S.FOV
-
-		end
-
+	if not camera then
+		return nil
 	end
 
-end)
-
---==================================================
--- FULLBRIGHT LOOP
---==================================================
-
-RunService.RenderStepped:Connect(function()
-
-	if not S.Fullbright then
-		return
-	end
-
-	Lighting.Brightness = 2
-	Lighting.ClockTime = 14
-	Lighting.FogEnd = 100000
-	Lighting.GlobalShadows = false
-
-end)
-
---==================================================
--- PAGE ANIMATION
---==================================================
-
-for _,page in pairs(Pages) do
-
-	page:GetPropertyChangedSignal(
-		"Visible"
-	):Connect(function()
-
-		if not page.Visible then
-			return
-		end
-
-		page.Position =
-			UDim2.fromOffset(20,50)
-
-		page.CanvasPosition =
-			Vector2.zero
-
-		Tween(
-			page,
-			.25,
-			Enum.EasingStyle.Quart,
-			Enum.EasingDirection.Out,
-			{
-				Position =
-					UDim2.fromOffset(12,50)
-			}
-		)
-
-	end)
-
-end
-
-print("RUSTED v3.1 | PART 3/4")
-
---==================================================
---              RUSTED v3.1 PART 4/4
---              SETTINGS + FINAL
---==================================================
-
---==================================================
--- SETTINGS PAGE
---==================================================
-
-AddSection(
-	SettingsPage,
-	"RUSTED"
-)
-
---==================================================
--- MENU COLOR
---==================================================
-
-local ColorPresets = {
-	{
-		Name = "Purple",
-		Color = Color3.fromRGB(145,70,255)
-	},
-	{
-		Name = "Blue",
-		Color = Color3.fromRGB(70,135,255)
-	},
-	{
-		Name = "Red",
-		Color = Color3.fromRGB(255,65,85)
-	},
-	{
-		Name = "Green",
-		Color = Color3.fromRGB(65,220,125)
+	local preferredNames = {
+		"ViewModel",
+		"Viewmodel",
+		"Arms",
+		"Hands",
+		"Hand",
 	}
-}
 
-local function ApplyColor(color)
-
-	S.MenuColor = color
-	COLORS.PURPLE = color
-
-	-- Main outline
-	if MainStroke then
-		MainStroke.Color = color
-	end
-
-	-- Logo
-	LogoBox.BackgroundColor3 = color
-
-	if LogoStroke then
-		LogoStroke.Color = COLORS.WHITE
-	end
-
-	-- Floating button
-	if FloatStroke then
-		FloatStroke.Color = color
-	end
-
-	-- Navigation
-	for _,data in pairs(NavButtons) do
-
-		data.Accent.BackgroundColor3 = color
-
-		if data.Button:GetAttribute("Selected") then
-			data.Icon.TextColor3 = color
-		end
-
-	end
-
-	-- FOV
-	if FOVStroke then
-		FOVStroke.Color = color
-	end
-
-	-- Scrollbars
-	for _,page in pairs(Pages) do
-		page.ScrollBarImageColor3 = color
-	end
-
-	-- Existing ESP
-	for _,data in pairs(ESPObjects) do
-
-		if data.Highlight then
-
-			data.Highlight.FillColor = color
-
-		end
-
-	end
-
-	-- Existing neon weapons
-	local function UpdateNeon(container)
-
-		for _,object in ipairs(container:GetDescendants()) do
-
-			if object:IsA("Highlight")
-				and object.Name == "RustedNeon" then
-
-				object.FillColor = color
-
-			end
-
-		end
-
-	end
-
-	local character = GetCharacter()
-
-	if character then
-		UpdateNeon(character)
-	end
-
-	UpdateNeon(Player.Backpack)
-
-end
-
---==================================================
--- COLOR BUTTONS
---==================================================
-
-for index,preset in ipairs(ColorPresets) do
-
-	local button = New("TextButton",{
-
-		Size = UDim2.new(1,0,0,42),
-
-		BackgroundColor3 = COLORS.ROW,
-
-		BorderSizePixel = 0,
-
-		Text = "",
-
-		AutoButtonColor = false,
-
-		LayoutOrder = index,
-
-		ZIndex = 13
-
-	},SettingsPage)
-
-	Corner(button,9)
-
-	local colorPreview = New("Frame",{
-
-		Size = UDim2.fromOffset(25,25),
-
-		Position = UDim2.fromOffset(10,8),
-
-		BackgroundColor3 = preset.Color,
-
-		BorderSizePixel = 0,
-
-		ZIndex = 14
-
-	},button)
-
-	Corner(colorPreview,8)
-
-	New("TextLabel",{
-
-		Size = UDim2.new(1,-50,1,0),
-
-		Position = UDim2.fromOffset(45,0),
-
-		BackgroundTransparency = 1,
-
-		Text = preset.Name,
-
-		TextColor3 = COLORS.TEXT,
-
-		Font = Enum.Font.GothamBold,
-
-		TextSize = 9,
-
-		TextXAlignment = Enum.TextXAlignment.Left,
-
-		ZIndex = 14
-
-	},button)
-
-	button.Activated:Connect(function()
-
-		ApplyColor(preset.Color)
-
-		Tween(
-			colorPreview,
-			.2,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Size = UDim2.fromOffset(30,30)
-			}
-		)
-
-		task.delay(.2,function()
-
-			if colorPreview.Parent then
-
-				Tween(
-					colorPreview,
-					.2,
-					Enum.EasingStyle.Back,
-					Enum.EasingDirection.Out,
-					{
-						Size = UDim2.fromOffset(25,25)
-					}
-				)
-
-			end
-
-		end)
-
-	end)
-
-	button.MouseEnter:Connect(function()
-
-		Tween(button,.12,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.HOVER
-		})
-
-	end)
-
-	button.MouseLeave:Connect(function()
-
-		Tween(button,.12,Enum.EasingStyle.Quart,nil,{
-			BackgroundColor3 = COLORS.ROW
-		})
-
-	end)
-
-end
-
---==================================================
--- UI SETTINGS
---==================================================
-
-AddSection(
-	SettingsPage,
-	"INTERFACE"
-)
-
-AddToggle(
-	SettingsPage,
-	"Menu Animations",
-	"Animated opening and closing",
-	"MenuAnimations",
-	function()
-	end
-)
-
---==================================================
--- VERSION INFO
---==================================================
-
-local Info = New("Frame",{
-
-	Size = UDim2.new(1,0,0,54),
-
-	BackgroundColor3 = COLORS.ROW,
-
-	BorderSizePixel = 0,
-
-	ZIndex = 13
-
-},SettingsPage)
-
-Corner(Info,9)
-
-New("TextLabel",{
-
-	Size = UDim2.new(1,-20,0,20),
-
-	Position = UDim2.fromOffset(10,6),
-
-	BackgroundTransparency = 1,
-
-	Text = "RUSTED",
-
-	TextColor3 = COLORS.TEXT,
-
-	Font = Enum.Font.GothamBlack,
-
-	TextSize = 11,
-
-	TextXAlignment = Enum.TextXAlignment.Left,
-
-	ZIndex = 14
-
-},Info)
-
-New("TextLabel",{
-
-	Size = UDim2.new(1,-20,0,16),
-
-	Position = UDim2.fromOffset(10,27),
-
-	BackgroundTransparency = 1,
-
-	Text = "v3.1  •  Compact UI",
-
-	TextColor3 = COLORS.SUB,
-
-	Font = Enum.Font.Gotham,
-
-	TextSize = 8,
-
-	TextXAlignment = Enum.TextXAlignment.Left,
-
-	ZIndex = 14
-
-},Info)
-
---==================================================
--- MENU ANIMATION
---==================================================
-
-local function CrazyPulse()
-
-	if not Main.Visible then
-		return
-	end
-
-	Tween(
-		MainStroke,
-		.18,
-		Enum.EasingStyle.Sine,
-		Enum.EasingDirection.InOut,
-		{
-			Transparency = 0
-		}
-	)
-
-	task.delay(.18,function()
-
-		if MainStroke and MainStroke.Parent then
-
-			Tween(
-				MainStroke,
-				.35,
-				Enum.EasingStyle.Sine,
-				Enum.EasingDirection.InOut,
-				{
-					Transparency = .15
-				}
+	for _, name in ipairs(
+		preferredNames
+	) do
+
+		local object =
+			camera:FindFirstChild(
+				name,
+				true
 			)
 
-		end
+		if object and
+			object:IsA("Model") then
 
-	end)
-
-end
-
---==================================================
--- LOGO ANIMATION
---==================================================
-
-task.spawn(function()
-
-	while Gui and Gui.Parent do
-
-		if Main.Visible then
-
-			Tween(
-				LogoBox,
-				1.5,
-				Enum.EasingStyle.Sine,
-				Enum.EasingDirection.InOut,
-				{
-					Rotation = 5
-				}
-			)
-
-			task.wait(1.5)
-
-			if not Gui or not Gui.Parent then
-				break
-			end
-
-			Tween(
-				LogoBox,
-				1.5,
-				Enum.EasingStyle.Sine,
-				Enum.EasingDirection.InOut,
-				{
-					Rotation = -5
-				}
-			)
-
-			task.wait(1.5)
-
-		else
-
-			task.wait(.5)
+			return object
 
 		end
 
 	end
 
-end)
+	for _, object in ipairs(
+		camera:GetChildren()
+	) do
 
---==================================================
--- TOP BAR HOVER
---==================================================
+		if object:IsA("Model") then
 
-for _,button in ipairs({
-	Minimize,
-	Close
-}) do
+			if object:FindFirstChildWhichIsA(
+				"Humanoid"
+			) == nil then
 
-	button.MouseEnter:Connect(function()
+				local hasPart =
+					object:FindFirstChildWhichIsA(
+						"BasePart",
+						true
+					)
 
-		Tween(
-			button,
-			.15,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Rotation = -8
-			}
-		)
-
-	end)
-
-	button.MouseLeave:Connect(function()
-
-		Tween(
-			button,
-			.15,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Rotation = 0
-			}
-		)
-
-	end)
-
-end
-
---==================================================
--- FLOAT BUTTON CRAZY EFFECT
---==================================================
-
-task.spawn(function()
-
-	while Gui and Gui.Parent do
-
-		if Float.Visible then
-
-			Tween(
-				FloatStroke,
-				.5,
-				Enum.EasingStyle.Sine,
-				Enum.EasingDirection.InOut,
-				{
-					Transparency = .7
-				}
-			)
-
-			task.wait(.5)
-
-			if not Float.Visible then
-				continue
-			end
-
-			Tween(
-				FloatStroke,
-				.5,
-				Enum.EasingStyle.Sine,
-				Enum.EasingDirection.InOut,
-				{
-					Transparency = .05
-				}
-			)
-
-			task.wait(.5)
-
-		else
-
-			task.wait(.5)
-
-		end
-
-	end
-
-end)
-
---==================================================
--- FLOAT BUTTON CLICK EFFECT
---==================================================
-
-Float.Activated:Connect(function()
-
-	Float.Rotation = -25
-
-	Tween(
-		Float,
-		.45,
-		Enum.EasingStyle.Elastic,
-		Enum.EasingDirection.Out,
-		{
-			Rotation = 0
-		}
-	)
-
-end)
-
---==================================================
--- MINIMIZE CLICK EFFECT
---==================================================
-
-Minimize.Activated:Connect(function()
-
-	CrazyPulse()
-
-end)
-
---==================================================
--- CLOSE CLICK EFFECT
---==================================================
-
-Close.Activated:Connect(function()
-
-	Tween(
-		Close,
-		.18,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.Out,
-		{
-			Rotation = 15
-		}
-	)
-
-end)
-
---==================================================
--- PAGE CLICK EFFECT
---==================================================
-
-for _,data in pairs(NavButtons) do
-
-	data.Button.Activated:Connect(function()
-
-		Tween(
-			data.Icon,
-			.18,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Rotation = 15
-			}
-		)
-
-		task.delay(.18,function()
-
-			if data.Icon.Parent then
-
-				Tween(
-					data.Icon,
-					.25,
-					Enum.EasingStyle.Back,
-					Enum.EasingDirection.Out,
-					{
-						Rotation = 0
-					}
-				)
-
-			end
-
-		end)
-
-	end)
-
-end
-
---==================================================
--- RESET CAMERA WHEN GUI CLOSES
---==================================================
-
-local function Cleanup()
-
-	for player in pairs(ESPObjects) do
-		RemoveESP(player)
-	end
-
-	local camera = workspace.CurrentCamera
-
-	if camera then
-		camera.FieldOfView = 70
-	end
-
-	local character = GetCharacter()
-
-	if character then
-
-		for _,object in ipairs(
-			character:GetDescendants()
-		) do
-
-			if object:IsA("BasePart") then
-
-				if object.Name ~= "HumanoidRootPart" then
-					-- Do not force collision state here.
+				if hasPart then
+					return object
 				end
 
 			end
@@ -3367,78 +5467,587 @@ local function Cleanup()
 
 	end
 
+	return nil
+
 end
 
---==================================================
--- CHARACTER RESPAWN CLEANUP
---==================================================
 
-Player.CharacterRemoving:Connect(function()
+local function ResetHands()
 
-	for player in pairs(ESPObjects) do
-		RemoveESP(player)
+	if HandsModel and
+		HandsModel.Parent and
+		OriginalHandsPivot then
+
+		HandsModel:PivotTo(
+			OriginalHandsPivot
+		)
+
 	end
 
-end)
+	HandsModel =
+		nil
+
+	OriginalHandsPivot =
+		nil
+
+end
+
+
+local function UpdateCustomHands()
+
+	if not S.CustomHands then
+
+		ResetHands()
+
+		return
+
+	end
+
+	local model =
+		FindHandsModel()
+
+	if not model then
+		return
+	end
+
+	if model ~= HandsModel then
+
+		ResetHands()
+
+		HandsModel =
+			model
+
+		OriginalHandsPivot =
+			model:GetPivot()
+
+	end
+
+	if not OriginalHandsPivot then
+		return
+	end
+
+	local offset =
+		CFrame.new(
+			S.HandsX,
+			S.HandsY,
+			S.HandsZ
+		)
+
+	model:PivotTo(
+		OriginalHandsPivot *
+		offset
+	)
+
+end
+
+
+--==================================================
+-- MISC LOOP
+--==================================================
+
+local MiscTimer =
+	0
+
+RunService.RenderStepped:Connect(
+	function(deltaTime)
+
+		MiscTimer +=
+			deltaTime
+
+		if MiscTimer <
+			0.03 then
+
+			return
+
+		end
+
+		MiscTimer =
+			0
+
+		UpdateFullbright()
+		UpdateNeonGun()
+		UpdateCustomHands()
+
+	end
+)
+
+
+--==================================================
+-- TOOL EVENTS
+--==================================================
+
+Player.CharacterAdded:Connect(
+	function(character)
+
+		task.wait(
+			0.5
+		)
+
+		LastNeonTool =
+			nil
+
+		RestoreNeon()
+
+		HandsModel =
+			nil
+
+		OriginalHandsPivot =
+			nil
+
+	end
+)
+
+
+--==================================================
+-- INITIAL STATE
+--==================================================
+
+UpdateFullbright()
+UpdateNeonGun()
+UpdateCustomHands()
+
+
+--==================================================
+-- END PART 6/7
+--==================================================
+
+--==================================================
+--                 RUSTED v3.2
+--                  PART 7/7
+--              FINAL SYSTEM
+--==================================================
+
+--==================================================
+-- THEME
+--==================================================
+
+local function ApplyTheme()
+
+	if not Main or not Main.Parent then
+		return
+	end
+
+	for _, object in ipairs(
+		Main:GetDescendants()
+	) do
+
+		if object:IsA("UIStroke") then
+
+			if object:GetAttribute(
+				"RustedPurple"
+			) then
+
+				object.Color =
+					S.MenuColor
+
+			end
+
+		elseif object:IsA("TextButton") then
+
+			if object:GetAttribute(
+				"RustedPurple"
+			) then
+
+				object.TextColor3 =
+					S.MenuColor
+
+			end
+
+		end
+
+	end
+
+end
+
+
+--==================================================
+-- MENU COLOR UPDATE
+--==================================================
+
+local function SetMenuColor(
+	color
+)
+
+	if typeof(color) ~= "Color3" then
+		return
+	end
+
+	S.MenuColor =
+		color
+
+	COLORS.PURPLE =
+		color
+
+	ApplyTheme()
+
+end
+
+
+--==================================================
+-- ANIMATION HELPERS
+--==================================================
+
+local function AnimateObject(
+	object,
+	properties,
+	duration
+)
+
+	if not S.MenuAnimations then
+		for property, value in pairs(
+			properties
+		) do
+			object[property] =
+				value
+		end
+
+		return
+	end
+
+	local tween =
+		TweenService:Create(
+			object,
+			TweenInfo.new(
+				duration or 0.15,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out
+			),
+			properties
+		)
+
+	tween:Play()
+
+	return tween
+
+end
+
+
+--==================================================
+-- MENU STATE
+--==================================================
+
+local MenuEnabled =
+	true
+
+
+local function SetMenuEnabled(
+	state
+)
+
+	MenuEnabled =
+		state
+
+	if not Main then
+		return
+	end
+
+	Main.Visible =
+		state
+
+end
+
+
+--==================================================
+-- SAFE CLEANUP
+--==================================================
+
+local Connections = {}
+
+
+local function AddConnection(
+	connection
+)
+
+	if connection then
+		table.insert(
+			Connections,
+			connection
+		)
+
+	end
+
+end
+
+
+local function Cleanup()
+
+	for _, connection in ipairs(
+		Connections
+	) do
+
+		pcall(
+			function()
+				connection:Disconnect()
+			end
+		)
+
+	end
+
+	table.clear(
+		Connections
+	)
+
+	StopNoclip()
+	RestoreNeon()
+
+	-- Restore camera
+
+	if Camera then
+
+		Camera.FieldOfView =
+			OriginalCameraFOV
+
+	end
+
+	-- Restore lighting
+
+	Lighting.Brightness =
+		OriginalLighting.Brightness
+
+	Lighting.ClockTime =
+		OriginalLighting.ClockTime
+
+	Lighting.FogEnd =
+		OriginalLighting.FogEnd
+
+	Lighting.GlobalShadows =
+		OriginalLighting.GlobalShadows
+
+	Lighting.Ambient =
+		OriginalLighting.Ambient
+
+	Lighting.OutdoorAmbient =
+		OriginalLighting.OutdoorAmbient
+
+	-- Restore character
+
+	local humanoid =
+		GetHumanoid()
+
+	if humanoid then
+
+		humanoid.WalkSpeed =
+			OriginalWalkSpeed
+
+		humanoid.UseJumpPower =
+			OriginalUseJumpPower
+
+		humanoid.JumpPower =
+			OriginalJumpPower
+
+	end
+
+end
+
+
+--==================================================
+-- CLOSE BUTTON
+--==================================================
+
+if Close then
+
+	Close.MouseButton1Click:Connect(
+		function()
+
+			Cleanup()
+
+			if Gui then
+				Gui.Enabled =
+					false
+			end
+
+		end
+	)
+
+end
+
+
+--==================================================
+-- RIGHT SHIFT MENU TOGGLE
+--==================================================
+
+AddConnection(
+	UIS.InputBegan:Connect(
+		function(
+			input,
+			gameProcessed
+		)
+
+			if gameProcessed then
+				return
+			end
+
+			if input.KeyCode ==
+				Enum.KeyCode.RightShift then
+
+				if Gui then
+
+					Gui.Enabled =
+						not Gui.Enabled
+
+				end
+
+			end
+
+		end
+	)
+)
+
+
+--==================================================
+-- CHARACTER SAFETY
+--==================================================
+
+AddConnection(
+	Player.CharacterAdded:Connect(
+		function()
+
+			task.wait(
+				1
+			)
+
+			if S.SpeedHack then
+				UpdateSpeed()
+			end
+
+			if S.Jump then
+				UpdateJump()
+			end
+
+			if S.Noclip then
+				UpdateNoclip()
+			end
+
+			if S.CustomHands then
+				UpdateCustomHands()
+			end
+
+		end
+	)
+)
+
+
+--==================================================
+-- CAMERA SAFETY
+--==================================================
+
+AddConnection(
+	workspace:GetPropertyChangedSignal(
+		"CurrentCamera"
+	):Connect(
+		function()
+
+			Camera =
+				workspace.CurrentCamera
+
+			if Camera and
+				not S.FOVChanger then
+
+				Camera.FieldOfView =
+					OriginalCameraFOV
+
+			end
+
+		end
+	)
+)
+
+
+--==================================================
+-- APPLY INITIAL THEME
+--==================================================
+
+ApplyTheme()
+
 
 --==================================================
 -- FINAL GUI SETTINGS
 --==================================================
 
-Gui.DisplayOrder = 999
+if Gui then
+
+	Gui.ResetOnSpawn =
+		false
+
+	Gui.IgnoreGuiInset =
+		true
+
+	DisplayOrder =
+		100
+
+end
+
 
 --==================================================
--- FINAL COLOR
+-- FINAL MENU STATE
 --==================================================
 
-ApplyColor(S.MenuColor)
+if Main then
+
+	Main.Visible =
+		true
+
+	Main.ClipsDescendants =
+		true
+
+end
+
 
 --==================================================
--- FINAL PAGE
+-- FINAL CONFIG
 --==================================================
 
-SwitchPage("Visual")
+S.MenuAnimations =
+	true
+
+S.AimAssist =
+	false
+
+S.ESP =
+	false
+
+S.BoxESP =
+	false
+
+S.Names =
+	false
+
+S.Health =
+	false
+
+S.Distance =
+	false
+
+S.Snapline =
+	false
+
+S.SpeedHack =
+	false
+
+S.Jump =
+	false
+
+S.Noclip =
+	false
+
+S.Fullbright =
+	false
+
+S.NeonGuns =
+	false
+
+S.CustomHands =
+	false
+
 
 --==================================================
--- FINAL START EFFECT
+-- RUSTED v3.2 READY
 --==================================================
 
-task.delay(.7,function()
+print(
+	"RUSTED v3.2 loaded successfully"
+)
 
-	if not Gui or not Gui.Parent then
-		return
-	end
-
-	-- small logo bounce
-	Tween(
-		LogoBox,
-		.25,
-		Enum.EasingStyle.Back,
-		Enum.EasingDirection.Out,
-		{
-			Size = UDim2.fromOffset(36,36)
-		}
-	)
-
-	task.wait(.25)
-
-	if LogoBox.Parent then
-
-		Tween(
-			LogoBox,
-			.25,
-			Enum.EasingStyle.Back,
-			Enum.EasingDirection.Out,
-			{
-				Size = UDim2.fromOffset(32,32)
-			}
-		)
-
-	end
-
-end)
-
-print("====================================")
-print("        RUSTED v3.1 LOADED")
-print("        ALL 4 PARTS READY")
-print("====================================")
+--==================================================
+-- END PART 7/7
+--==================================================
