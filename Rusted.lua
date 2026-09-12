@@ -1,823 +1,5106 @@
---// RUSTED HUB v2.5
---// PART 1/4
---// CORE + COMPACT MENU
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 1/6
+====================================================
+]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local UIS = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
---// CONFIG
-local VERSION = "2.5"
+local RUSTED_NAME = "RUSTED"
+local RUSTED_VERSION = "3.0"
 
-local Settings = {
-    ESP = true,
-    BoxESP = true,
-    NameESP = true,
-    DistanceESP = true,
-    HealthESP = true,
-    TracerESP = true,
+----------------------------------------------------
+-- REMOVE OLD VERSION
+----------------------------------------------------
 
-    AimAssist = false,
+pcall(function()
+    local Old = PlayerGui:FindFirstChild("RustedV3")
+    if Old then
+        Old:Destroy()
+    end
+end)
+
+----------------------------------------------------
+-- GLOBAL
+----------------------------------------------------
+
+_G.RustedV3 = {}
+local Hub = _G.RustedV3
+
+Hub.Name = RUSTED_NAME
+Hub.Version = RUSTED_VERSION
+Hub.Player = Player
+Hub.PlayerGui = PlayerGui
+
+----------------------------------------------------
+-- THEME
+----------------------------------------------------
+
+Hub.Theme = {
+    Background = Color3.fromRGB(7, 6, 14),
+    Background2 = Color3.fromRGB(10, 8, 19),
+
+    Panel = Color3.fromRGB(12, 10, 23),
+    Panel2 = Color3.fromRGB(17, 13, 31),
+
+    Row = Color3.fromRGB(18, 14, 31),
+    RowHover = Color3.fromRGB(27, 18, 48),
+
+    Purple = Color3.fromRGB(126, 52, 255),
+    Purple2 = Color3.fromRGB(155, 91, 255),
+    PurpleDark = Color3.fromRGB(48, 23, 91),
+
+    Border = Color3.fromRGB(65, 35, 115),
+
+    Text = Color3.fromRGB(242, 239, 255),
+    Text2 = Color3.fromRGB(181, 174, 205),
+    Text3 = Color3.fromRGB(112, 104, 136),
+
+    White = Color3.fromRGB(255, 255, 255),
+    Green = Color3.fromRGB(70, 220, 125),
+    Red = Color3.fromRGB(245, 70, 85),
+    Blue = Color3.fromRGB(55, 125, 255),
+    Pink = Color3.fromRGB(245, 75, 180),
+    Orange = Color3.fromRGB(255, 135, 50),
+}
+
+local Theme = Hub.Theme
+
+----------------------------------------------------
+-- SETTINGS
+----------------------------------------------------
+
+Hub.Settings = {
+
+    ------------------------------------------------
+    -- VISUAL
+    ------------------------------------------------
+
+    ESP = false,
+    BoxESP = false,
+    NameESP = false,
+    HealthESP = false,
+    DistanceESP = false,
+    TracerESP = false,
+
+    FOVChanger = false,
+    FOV = 90,
+
+    Skybox = false,
+
+    CustomHands = false,
+    HandX = 0,
+    HandY = 0,
+    HandZ = 0,
+
+    ------------------------------------------------
+    -- COMBAT
+    ------------------------------------------------
+
+    SilentAim = false,
     TeamCheck = true,
-    WallCheck = true,
 
-    Speed = false,
-    HighJump = false,
-    Crosshair = false,
+    ShowFOV = false,
+    Snapline = false,
 
-    Menu = true,
-    AutoUpdate = true
+    FOVRadius = 150,
+    HitPart = "Head",
+
+    BulletTracer = false,
+    TracerLifetime = 1,
+    TracerType = "Laser",
+    TracerColor = "Purple",
+
+    ------------------------------------------------
+    -- MOVEMENT
+    ------------------------------------------------
+
+    SpeedHack = false,
+    Speed = 16,
+
+    Noclip = false,
+
+    JumpShot = false,
+
+    Jump = false,
+    JumpPower = 50,
+
+    ------------------------------------------------
+    -- MISC
+    ------------------------------------------------
+
+    Fullbright = false,
+    NeonGuns = false,
+
+    ------------------------------------------------
+    -- SETTINGS
+    ------------------------------------------------
+
+    MenuColor = "Purple",
+
+    MenuOpen = true,
+
+    AutoUpdate = true,
 }
 
---// COLORS
-local C = {
-    Background = Color3.fromRGB(7,6,16),
-    Sidebar = Color3.fromRGB(11,9,23),
-    Card = Color3.fromRGB(17,14,32),
-    Hover = Color3.fromRGB(32,22,55),
+local Settings = Hub.Settings
 
-    Purple = Color3.fromRGB(145,60,255),
-    LightPurple = Color3.fromRGB(190,125,255),
+----------------------------------------------------
+-- SCREEN GUI
+----------------------------------------------------
 
-    White = Color3.fromRGB(245,240,255),
-    Gray = Color3.fromRGB(145,138,165),
-    Red = Color3.fromRGB(235,70,85)
-}
+local ScreenGui = Instance.new("ScreenGui")
 
---// REMOVE OLD MENU
-local Old = PlayerGui:FindFirstChild("RustedHub")
-if Old then
-    Old:Destroy()
-end
+ScreenGui.Name = "RustedV3"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
---// HELPERS
-local function Corner(Object, Radius)
-    local U = Instance.new("UICorner")
-    U.CornerRadius = UDim.new(0, Radius or 10)
-    U.Parent = Object
-end
+ScreenGui.Parent = PlayerGui
 
-local function Border(Object)
-    local S = Instance.new("UIStroke")
-    S.Color = C.Purple
-    S.Transparency = .55
-    S.Thickness = 1
-    S.Parent = Object
-end
+Hub.ScreenGui = ScreenGui
 
-local function Tween(Object, Properties, Time)
-    TweenService:Create(
-        Object,
-        TweenInfo.new(
-            Time or .15,
-            Enum.EasingStyle.Quad,
-            Enum.EasingDirection.Out
-        ),
-        Properties
-    ):Play()
-end
+----------------------------------------------------
+-- MAIN
+----------------------------------------------------
 
---// GUI
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "RustedHub"
-GUI.ResetOnSpawn = false
-GUI.IgnoreGuiInset = true
-GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-GUI.DisplayOrder = 999
-GUI.Parent = PlayerGui
-
---// MAIN
 local Main = Instance.new("Frame")
+
 Main.Name = "Main"
-Main.Parent = GUI
-Main.Size = UDim2.fromOffset(700,430)
-Main.Position = UDim2.new(.5,-350,.5,-215)
-Main.BackgroundColor3 = C.Background
+
+-- Компактный размер
+Main.Size = UDim2.fromOffset(760, 460)
+
+Main.Position = UDim2.new(
+    0.5,
+    -380,
+    0.5,
+    -230
+)
+
+Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
-Main.Visible = true
+Main.ClipsDescendants = true
 
-Corner(Main,16)
-Border(Main)
+Main.Parent = ScreenGui
 
---// TOP
-local Top = Instance.new("Frame")
-Top.Parent = Main
-Top.Size = UDim2.new(1,0,0,65)
-Top.BackgroundColor3 = C.Sidebar
-Top.BorderSizePixel = 0
+Hub.Main = Main
 
-local Logo = Instance.new("TextLabel")
-Logo.Parent = Top
-Logo.Position = UDim2.fromOffset(15,10)
-Logo.Size = UDim2.fromOffset(45,45)
-Logo.BackgroundColor3 = Color3.fromRGB(40,20,75)
-Logo.Text = "R"
-Logo.TextColor3 = C.LightPurple
-Logo.TextSize = 24
-Logo.Font = Enum.Font.GothamBold
+----------------------------------------------------
+-- MAIN CORNER
+----------------------------------------------------
 
-Corner(Logo,12)
+local MainCorner = Instance.new("UICorner")
 
-local Title = Instance.new("TextLabel")
-Title.Parent = Top
-Title.Position = UDim2.fromOffset(70,10)
-Title.Size = UDim2.fromOffset(250,28)
-Title.BackgroundTransparency = 1
-Title.Text = "RUSTED"
-Title.TextColor3 = C.White
-Title.TextSize = 21
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
+MainCorner.CornerRadius = UDim.new(0, 10)
 
-local Version = Instance.new("TextLabel")
-Version.Parent = Top
-Version.Position = UDim2.fromOffset(72,36)
-Version.Size = UDim2.fromOffset(150,18)
-Version.BackgroundTransparency = 1
-Version.Text = "PRIVATE • v"..VERSION
-Version.TextColor3 = C.Gray
-Version.TextSize = 9
-Version.Font = Enum.Font.GothamMedium
-Version.TextXAlignment = Enum.TextXAlignment.Left
+MainCorner.Parent = Main
 
---// MINIMIZE
-local Min = Instance.new("TextButton")
-Min.Parent = Top
-Min.Position = UDim2.new(1,-82,0,15)
-Min.Size = UDim2.fromOffset(30,30)
-Min.BackgroundTransparency = 1
-Min.Text = "−"
-Min.TextColor3 = C.White
-Min.TextSize = 22
-Min.Font = Enum.Font.GothamBold
-Min.AutoButtonColor = false
+----------------------------------------------------
+-- MAIN BORDER
+----------------------------------------------------
 
---// CLOSE
-local Close = Instance.new("TextButton")
-Close.Parent = Top
-Close.Position = UDim2.new(1,-45,0,15)
-Close.Size = UDim2.fromOffset(30,30)
-Close.BackgroundTransparency = 1
-Close.Text = "×"
-Close.TextColor3 = C.White
-Close.TextSize = 24
-Close.Font = Enum.Font.GothamBold
-Close.AutoButtonColor = false
+local MainStroke = Instance.new("UIStroke")
 
---// SIDEBAR
-local Sidebar = Instance.new("Frame")
-Sidebar.Parent = Main
-Sidebar.Position = UDim2.fromOffset(0,65)
-Sidebar.Size = UDim2.new(0,155,1,-65)
-Sidebar.BackgroundColor3 = C.Sidebar
-Sidebar.BorderSizePixel = 0
+MainStroke.Color = Theme.Border
+MainStroke.Thickness = 1.2
+MainStroke.Transparency = 0.15
 
-local MenuLabel = Instance.new("TextLabel")
-MenuLabel.Parent = Sidebar
-MenuLabel.Position = UDim2.fromOffset(15,12)
-MenuLabel.Size = UDim2.fromOffset(120,20)
-MenuLabel.BackgroundTransparency = 1
-MenuLabel.Text = "MENU"
-MenuLabel.TextColor3 = C.Gray
-MenuLabel.TextSize = 9
-MenuLabel.Font = Enum.Font.GothamBold
-MenuLabel.TextXAlignment = Enum.TextXAlignment.Left
+MainStroke.Parent = Main
 
---// CONTENT
-local Content = Instance.new("Frame")
-Content.Parent = Main
-Content.Position = UDim2.fromOffset(155,65)
-Content.Size = UDim2.new(1,-155,1,-65)
-Content.BackgroundTransparency = 1
-Content.BorderSizePixel = 0
+Hub.MainStroke = MainStroke
 
---// SHARED DATA
-_G.Rusted = _G.Rusted or {}
+----------------------------------------------------
+-- RESPONSIVE SCALE
+----------------------------------------------------
 
-_G.Rusted.GUI = GUI
-_G.Rusted.Main = Main
-_G.Rusted.Top = Top
-_G.Rusted.Sidebar = Sidebar
-_G.Rusted.Content = Content
-_G.Rusted.Min = Min
-_G.Rusted.Close = Close
-_G.Rusted.Settings = Settings
-_G.Rusted.Version = VERSION
-_G.Rusted.Colors = C
+local UIScale = Instance.new("UIScale")
 
-print("[Rusted v2.5] Part 1 loaded")
+UIScale.Name = "ResponsiveScale"
 
---// RUSTED HUB v2.5
---// PART 2/4
---// SIDEBAR + PAGES
+UIScale.Scale = 1
 
-local R = _G.Rusted
-local Main = R.Main
-local Sidebar = R.Sidebar
-local Content = R.Content
-local C = R.Colors
+UIScale.Parent = Main
 
-local Pages = {}
-local Buttons = {}
+Hub.UIScale = UIScale
 
---// PAGE DESCRIPTIONS
-local Desc = {
-    Visual = "Настройки визуальных функций",
-    Combat = "Настройки боевых функций",
-    Movement = "Настройки движения",
-    Misc = "Дополнительные функции",
-    Settings = "Настройки Rusted Hub"
-}
+----------------------------------------------------
+-- RESPONSIVE SIZE
+----------------------------------------------------
 
---// TITLE
-local PageTitle = Instance.new("TextLabel")
-PageTitle.Parent = Content
-PageTitle.Position = UDim2.fromOffset(20,15)
-PageTitle.Size = UDim2.fromOffset(300,28)
-PageTitle.BackgroundTransparency = 1
-PageTitle.TextColor3 = C.White
-PageTitle.TextSize = 20
-PageTitle.Font = Enum.Font.GothamBold
-PageTitle.TextXAlignment = Enum.TextXAlignment.Left
+local function UpdateScale()
 
-local PageDesc = Instance.new("TextLabel")
-PageDesc.Parent = Content
-PageDesc.Position = UDim2.fromOffset(21,42)
-PageDesc.Size = UDim2.fromOffset(400,20)
-PageDesc.BackgroundTransparency = 1
-PageDesc.TextColor3 = C.Gray
-PageDesc.TextSize = 10
-PageDesc.Font = Enum.Font.Gotham
-PageDesc.TextXAlignment = Enum.TextXAlignment.Left
+    local Camera = workspace.CurrentCamera
 
---// CREATE PAGES
-for _,Name in ipairs({
-    "Visual",
-    "Combat",
-    "Movement",
-    "Misc",
-    "Settings"
-}) do
-
-    local Page = Instance.new("ScrollingFrame")
-    Page.Name = Name
-    Page.Parent = Content
-    Page.Position = UDim2.fromOffset(20,70)
-    Page.Size = UDim2.new(1,-40,1,-85)
-    Page.BackgroundTransparency = 1
-    Page.BorderSizePixel = 0
-    Page.ScrollBarThickness = 2
-    Page.ScrollBarImageColor3 = C.Purple
-    Page.CanvasSize = UDim2.new()
-    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    Page.Visible = false
-
-    local Layout = Instance.new("UIListLayout")
-    Layout.Parent = Page
-    Layout.Padding = UDim.new(0,7)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-    Pages[Name] = Page
-end
-
---// BUTTON DATA
-local Data = {
-    {"Visual","◉"},
-    {"Combat","⌁"},
-    {"Movement","↗"},
-    {"Misc","◆"},
-    {"Settings","⚙"}
-}
-
---// SELECT PAGE
-local function SelectPage(Name)
-
-    for PageName,Page in pairs(Pages) do
-        Page.Visible = PageName == Name
+    if not Camera then
+        return
     end
 
-    for ButtonName,Button in pairs(Buttons) do
+    local Viewport = Camera.ViewportSize
+    local Width = Viewport.X
 
-        local Active = ButtonName == Name
-        local Icon = Button:FindFirstChild("Icon")
-        local Label = Button:FindFirstChild("Label")
+    if Width <= 420 then
 
-        Button.BackgroundColor3 =
-            Active and C.Hover or C.Sidebar
+        UIScale.Scale = 0.62
 
-        if Icon then
-            Icon.TextColor3 =
-                Active and C.LightPurple or C.Gray
-        end
+    elseif Width <= 500 then
 
-        if Label then
-            Label.TextColor3 =
-                Active and C.White or C.Gray
-        end
+        UIScale.Scale = 0.70
+
+    elseif Width <= 650 then
+
+        UIScale.Scale = 0.80
+
+    elseif Width <= 800 then
+
+        UIScale.Scale = 0.90
+
+    else
+
+        UIScale.Scale = 1
+
+    end
+end
+
+UpdateScale()
+
+if workspace.CurrentCamera then
+
+    workspace.CurrentCamera
+        :GetPropertyChangedSignal("ViewportSize")
+        :Connect(UpdateScale)
+
+end
+
+----------------------------------------------------
+-- STORAGE
+----------------------------------------------------
+
+Hub.Pages = {}
+Hub.PageButtons = {}
+
+Hub.Controls = {}
+
+Hub.ToggleObjects = {}
+Hub.SliderObjects = {}
+Hub.DropdownObjects = {}
+
+Hub.Connections = {}
+
+Hub.ESPObjects = {}
+
+Hub.CurrentPage = nil
+
+----------------------------------------------------
+-- CREATE OBJECT
+----------------------------------------------------
+
+function Hub.New(ClassName, Properties, Parent)
+
+    local Object = Instance.new(ClassName)
+
+    for Property, Value in pairs(Properties or {}) do
+        Object[Property] = Value
     end
 
-    PageTitle.Text = Name
-    PageDesc.Text = Desc[Name] or ""
+    Object.Parent = Parent
+
+    return Object
 end
 
---// SIDEBAR BUTTONS
-for i,Info in ipairs(Data) do
+----------------------------------------------------
+-- CORNER
+----------------------------------------------------
 
-    local Name = Info[1]
-    local IconText = Info[2]
-
-    local Button = Instance.new("TextButton")
-    Button.Name = Name
-    Button.Parent = Sidebar
-    Button.Position = UDim2.fromOffset(10,40 + ((i-1)*48))
-    Button.Size = UDim2.new(1,-20,0,40)
-    Button.BackgroundColor3 = C.Sidebar
-    Button.BorderSizePixel = 0
-    Button.Text = ""
-    Button.AutoButtonColor = false
+function Hub.Corner(Object, Radius)
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0,9)
-    Corner.Parent = Button
 
-    local Icon = Instance.new("TextLabel")
-    Icon.Name = "Icon"
-    Icon.Parent = Button
-    Icon.Position = UDim2.fromOffset(10,0)
-    Icon.Size = UDim2.fromOffset(25,40)
-    Icon.BackgroundTransparency = 1
-    Icon.Text = IconText
-    Icon.TextColor3 = C.Gray
-    Icon.TextSize = 15
-    Icon.Font = Enum.Font.GothamBold
+    Corner.CornerRadius =
+        UDim.new(0, Radius or 6)
 
-    local Label = Instance.new("TextLabel")
-    Label.Name = "Label"
-    Label.Parent = Button
-    Label.Position = UDim2.fromOffset(43,0)
-    Label.Size = UDim2.new(1,-48,1,0)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = C.Gray
-    Label.TextSize = 11
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Corner.Parent = Object
 
-    Buttons[Name] = Button
-
-    Button.MouseEnter:Connect(function()
-        if PageTitle.Text ~= Name then
-            Button.BackgroundColor3 = C.Hover
-        end
-    end)
-
-    Button.MouseLeave:Connect(function()
-        if PageTitle.Text ~= Name then
-            Button.BackgroundColor3 = C.Sidebar
-        end
-    end)
-
-    Button.MouseButton1Click:Connect(function()
-        SelectPage(Name)
-    end)
+    return Corner
 end
 
---// SIDEBAR FOOTER
-local Footer = Instance.new("TextLabel")
-Footer.Parent = Sidebar
-Footer.Position = UDim2.new(0,15,1,-38)
-Footer.Size = UDim2.new(1,-30,0,20)
-Footer.BackgroundTransparency = 1
-Footer.Text = "RUSTED v"..R.Version
-Footer.TextColor3 = C.Gray
-Footer.TextSize = 9
-Footer.Font = Enum.Font.GothamBold
-Footer.TextXAlignment = Enum.TextXAlignment.Left
+----------------------------------------------------
+-- STROKE
+----------------------------------------------------
 
---// SAVE REFERENCES
-R.Pages = Pages
-R.Buttons = Buttons
-R.PageTitle = PageTitle
-R.PageDesc = PageDesc
-R.SelectPage = SelectPage
-
---// DEFAULT PAGE
-SelectPage("Visual")
-
-print("[Rusted v2.5] Part 2 loaded")
-
---// RUSTED HUB v2.5
---// PART 3/4
---// CONTROLS
-
-local R = _G.Rusted
-local Pages = R.Pages
-local Settings = R.Settings
-local C = R.Colors
-
---// TOGGLE
-local function AddToggle(Page, Name, Key)
-
-    local Row = Instance.new("Frame")
-    Row.Parent = Page
-    Row.Size = UDim2.new(1,0,0,44)
-    Row.BackgroundColor3 = C.Card
-    Row.BorderSizePixel = 0
-
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0,9)
-    Corner.Parent = Row
+function Hub.Stroke(
+    Object,
+    Color,
+    Thickness,
+    Transparency
+)
 
     local Stroke = Instance.new("UIStroke")
-    Stroke.Color = C.Purple
-    Stroke.Transparency = .7
-    Stroke.Parent = Row
 
-    local Label = Instance.new("TextLabel")
-    Label.Parent = Row
-    Label.Position = UDim2.fromOffset(13,0)
-    Label.Size = UDim2.new(1,-75,1,0)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = C.White
-    Label.TextSize = 11
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Stroke.Color =
+        Color or Theme.Border
 
-    local Button = Instance.new("TextButton")
-    Button.Parent = Row
-    Button.Position = UDim2.new(1,-55,.5,-11)
-    Button.Size = UDim2.fromOffset(40,22)
-    Button.Text = ""
-    Button.AutoButtonColor = false
-    Button.BorderSizePixel = 0
+    Stroke.Thickness =
+        Thickness or 1
 
-    local BC = Instance.new("UICorner")
-    BC.CornerRadius = UDim.new(1,0)
-    BC.Parent = Button
+    Stroke.Transparency =
+        Transparency or 0
 
-    local Dot = Instance.new("Frame")
-    Dot.Parent = Button
-    Dot.Size = UDim2.fromOffset(16,16)
-    Dot.Position = UDim2.fromOffset(3,3)
-    Dot.BorderSizePixel = 0
+    Stroke.Parent = Object
 
-    local DC = Instance.new("UICorner")
-    DC.CornerRadius = UDim.new(1,0)
-    DC.Parent = Dot
-
-    local function Update()
-
-        local On = Settings[Key]
-
-        if On then
-            Button.BackgroundColor3 = C.Purple
-            Dot.BackgroundColor3 = C.White
-            Dot.Position = UDim2.new(1,-19,0,3)
-        else
-            Button.BackgroundColor3 = Color3.fromRGB(45,40,55)
-            Dot.BackgroundColor3 = C.Gray
-            Dot.Position = UDim2.fromOffset(3,3)
-        end
-    end
-
-    Button.MouseButton1Click:Connect(function()
-        Settings[Key] = not Settings[Key]
-        Update()
-    end)
-
-    Update()
+    return Stroke
 end
 
---// VISUAL
-AddToggle(Pages.Visual,"ESP","ESP")
-AddToggle(Pages.Visual,"Box ESP","BoxESP")
-AddToggle(Pages.Visual,"Name ESP","NameESP")
-AddToggle(Pages.Visual,"Distance ESP","DistanceESP")
-AddToggle(Pages.Visual,"Health ESP","HealthESP")
-AddToggle(Pages.Visual,"Tracer ESP","TracerESP")
+----------------------------------------------------
+-- TWEEN
+----------------------------------------------------
 
---// COMBAT
-AddToggle(Pages.Combat,"Aim Assist","AimAssist")
-AddToggle(Pages.Combat,"Team Check","TeamCheck")
-AddToggle(Pages.Combat,"Wall Check","WallCheck")
+function Hub.Tween(
+    Object,
+    Properties,
+    Duration
+)
 
---// MOVEMENT
-AddToggle(Pages.Movement,"Speed","Speed")
-AddToggle(Pages.Movement,"High Jump","HighJump")
+    local Tween = TweenService:Create(
 
---// MISC
-AddToggle(Pages.Misc,"Crosshair","Crosshair")
+        Object,
 
---// SETTINGS
-AddToggle(Pages.Settings,"Auto Update","AutoUpdate")
+        TweenInfo.new(
+            Duration or 0.15,
+            Enum.EasingStyle.Quart,
+            Enum.EasingDirection.Out
+        ),
 
---// CHARACTER
-local function ApplyMovement()
+        Properties
+    )
+
+    Tween:Play()
+
+    return Tween
+end
+
+----------------------------------------------------
+-- SAFE CALLBACK
+----------------------------------------------------
+
+function Hub.SafeCall(Callback, ...)
+
+    if typeof(Callback) ~= "function" then
+        return
+    end
+
+    local Args = {...}
+
+    task.spawn(function()
+
+        pcall(function()
+
+            Callback(
+                table.unpack(Args)
+            )
+
+        end)
+
+    end)
+end
+
+----------------------------------------------------
+-- CHARACTER
+----------------------------------------------------
+
+function Hub.GetCharacter()
+
+    return Player.Character
+        or Player.CharacterAdded:Wait()
+
+end
+
+----------------------------------------------------
+-- HUMANOID
+----------------------------------------------------
+
+function Hub.GetHumanoid()
 
     local Character = Player.Character
-    if not Character then return end
 
-    local Humanoid =
-        Character:FindFirstChildOfClass("Humanoid")
-
-    if not Humanoid then return end
-
-    if Settings.Speed then
-        Humanoid.WalkSpeed = 24
-    else
-        Humanoid.WalkSpeed = 16
+    if not Character then
+        return nil
     end
 
-    if Settings.HighJump then
-        Humanoid.JumpPower = 75
-    else
-        Humanoid.JumpPower = 50
-    end
-end
-
-Player.CharacterAdded:Connect(function()
-
-    task.wait(1)
-    ApplyMovement()
-
-end)
-
-task.spawn(function()
-
-    while R.GUI and R.GUI.Parent do
-
-        ApplyMovement()
-
-        task.wait(.3)
-    end
-
-end)
-
-R.AddToggle = AddToggle
-R.ApplyMovement = ApplyMovement
-
-print("[Rusted v2.5] Part 3 loaded")
-
---// RUSTED HUB v2.5
---// PART 4/4
---// FINAL
-
-local R = _G.Rusted
-
-local GUI = R.GUI
-local Main = R.Main
-local Top = R.Top
-local Min = R.Min
-local Close = R.Close
-
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-
-local C = R.Colors
-
---// FLOATING BUTTON
-local Mini = Instance.new("TextButton")
-Mini.Name = "RustedMini"
-Mini.Parent = GUI
-Mini.Size = UDim2.fromOffset(48,48)
-Mini.Position = UDim2.new(.5,-24,.5,-24)
-Mini.BackgroundColor3 = C.Background
-Mini.BorderSizePixel = 0
-Mini.Text = "R"
-Mini.TextColor3 = C.LightPurple
-Mini.TextSize = 20
-Mini.Font = Enum.Font.GothamBold
-Mini.Visible = false
-Mini.AutoButtonColor = false
-
-local MC = Instance.new("UICorner")
-MC.CornerRadius = UDim.new(1,0)
-MC.Parent = Mini
-
-local MS = Instance.new("UIStroke")
-MS.Color = C.Purple
-MS.Thickness = 2
-MS.Parent = Mini
-
---// MINIMIZE
-local Minimized = false
-
-local function Minimize()
-
-    Minimized = true
-
-    Main.Visible = false
-    Mini.Visible = true
-
-end
-
-local function Restore()
-
-    Minimized = false
-
-    Mini.Visible = false
-    Main.Visible = true
-
-end
-
-Min.MouseButton1Click:Connect(Restore)
-
-Mini.MouseEnter:Connect(function()
-    TweenService:Create(
-        Mini,
-        TweenInfo.new(.12),
-        {BackgroundColor3 = C.Hover}
-    ):Play()
-end)
-
-Mini.MouseLeave:Connect(function()
-    TweenService:Create(
-        Mini,
-        TweenInfo.new(.12),
-        {BackgroundColor3 = C.Background}
-    ):Play()
-end)
-
-Min.MouseButton1Click:Connect(Minimize)
-
---// CLOSE
-Close.MouseButton1Click:Connect(function()
-
-    GUI.Enabled = false
-
-end)
-
---// CLOSE HOVER
-Close.MouseEnter:Connect(function()
-
-    TweenService:Create(
-        Close,
-        TweenInfo.new(.1),
-        {TextColor3 = C.Red}
-    ):Play()
-
-end)
-
-Close.MouseLeave:Connect(function()
-
-    TweenService:Create(
-        Close,
-        TweenInfo.new(.1),
-        {TextColor3 = C.White}
-    ):Play()
-
-end)
-
---// MIN HOVER
-Min.MouseEnter:Connect(function()
-
-    TweenService:Create(
-        Min,
-        TweenInfo.new(.1),
-        {TextColor3 = C.LightPurple}
-    ):Play()
-
-end)
-
-Min.MouseLeave:Connect(function()
-
-    TweenService:Create(
-        Min,
-        TweenInfo.new(.1),
-        {TextColor3 = C.White}
-    ):Play()
-
-end)
-
---// DRAG SYSTEM
-local Dragging = false
-local DragStart
-local StartPosition
-local DragInput
-
-local function UpdateDrag(Input)
-
-    local Delta = Input.Position - DragStart
-
-    Main.Position = UDim2.new(
-        StartPosition.X.Scale,
-        StartPosition.X.Offset + Delta.X,
-        StartPosition.Y.Scale,
-        StartPosition.Y.Offset + Delta.Y
+    return Character:FindFirstChildOfClass(
+        "Humanoid"
     )
 end
 
-Top.InputBegan:Connect(function(Input)
+----------------------------------------------------
+-- ROOT
+----------------------------------------------------
 
-    if Input.UserInputType == Enum.UserInputType.MouseButton1
-    or Input.UserInputType == Enum.UserInputType.Touch then
+function Hub.GetRoot()
 
-        Dragging = true
-        DragStart = Input.Position
-        StartPosition = Main.Position
+    local Character = Player.Character
 
-        Input.Changed:Connect(function()
+    if not Character then
+        return nil
+    end
 
-            if Input.UserInputState == Enum.UserInputState.End then
-                Dragging = false
-            end
+    return Character:FindFirstChild(
+        "HumanoidRootPart"
+    )
+end
 
+----------------------------------------------------
+-- CAMERA FOV
+----------------------------------------------------
+
+Hub.DefaultFOV = 70
+
+pcall(function()
+
+    if workspace.CurrentCamera then
+
+        Hub.DefaultFOV =
+            workspace.CurrentCamera.FieldOfView
+
+    end
+
+end)
+
+----------------------------------------------------
+-- CONNECTION
+----------------------------------------------------
+
+function Hub.Connect(
+    Signal,
+    Callback
+)
+
+    local Connection =
+        Signal:Connect(Callback)
+
+    table.insert(
+        Hub.Connections,
+        Connection
+    )
+
+    return Connection
+end
+
+----------------------------------------------------
+-- CLEANUP
+----------------------------------------------------
+
+function Hub.Cleanup()
+
+    for _, Connection in ipairs(
+        Hub.Connections
+    ) do
+
+        pcall(function()
+            Connection:Disconnect()
         end)
-    end
-end)
-
-Top.InputChanged:Connect(function(Input)
-
-    if Input.UserInputType == Enum.UserInputType.MouseMovement
-    or Input.UserInputType == Enum.UserInputType.Touch then
-
-        DragInput = Input
 
     end
-end)
 
-UIS.InputChanged:Connect(function(Input)
+    Hub.Connections = {}
 
-    if Input == DragInput and Dragging then
-        UpdateDrag(Input)
-    end
+    for _, Object in pairs(
+        Hub.ESPObjects
+    ) do
 
-end)
-
---// MINI BUTTON DRAG
-local MiniDragging = false
-local MiniStart
-local MiniPosition
-local MiniInput
-
-Mini.InputBegan:Connect(function(Input)
-
-    if Input.UserInputType == Enum.UserInputType.MouseButton1
-    or Input.UserInputType == Enum.UserInputType.Touch then
-
-        MiniDragging = true
-        MiniStart = Input.Position
-        MiniPosition = Mini.Position
-
-        Input.Changed:Connect(function()
-
-            if Input.UserInputState == Enum.UserInputState.End then
-                MiniDragging = false
-            end
-
+        pcall(function()
+            Object:Destroy()
         end)
-    end
-end)
-
-Mini.InputChanged:Connect(function(Input)
-
-    if Input.UserInputType == Enum.UserInputType.MouseMovement
-    or Input.UserInputType == Enum.UserInputType.Touch then
-
-        MiniInput = Input
 
     end
+
+    Hub.ESPObjects = {}
+
+end
+
+----------------------------------------------------
+-- MENU COLORS
+----------------------------------------------------
+
+Hub.MenuColors = {
+
+    Purple = Color3.fromRGB(
+        126,
+        52,
+        255
+    ),
+
+    Red = Color3.fromRGB(
+        245,
+        70,
+        85
+    ),
+
+    Blue = Color3.fromRGB(
+        55,
+        125,
+        255
+    ),
+
+    Green = Color3.fromRGB(
+        65,
+        210,
+        120
+    ),
+
+    Pink = Color3.fromRGB(
+        245,
+        75,
+        180
+    ),
+
+    Orange = Color3.fromRGB(
+        255,
+        135,
+        50
+    ),
+}
+
+----------------------------------------------------
+-- GET MENU COLOR
+----------------------------------------------------
+
+function Hub.GetMenuColor()
+
+    return Hub.MenuColors[
+        Settings.MenuColor
+    ]
+    or Hub.MenuColors.Purple
+
+end
+
+----------------------------------------------------
+-- APPLY MENU COLOR
+----------------------------------------------------
+
+function Hub.ApplyMenuColor()
+
+    local Color =
+        Hub.GetMenuColor()
+
+    if Hub.MainStroke then
+        Hub.MainStroke.Color = Color
+    end
+
+    if Hub.FloatingButton then
+
+        Hub.FloatingButton.TextColor3 =
+            Color
+
+    end
+
+    if Hub.FloatingStroke then
+
+        Hub.FloatingStroke.Color =
+            Color
+
+    end
+
+    if Hub.FloatingAccent then
+
+        Hub.FloatingAccent.BackgroundColor3 =
+            Color
+
+    end
+
+end
+
+----------------------------------------------------
+-- MENU STATE
+----------------------------------------------------
+
+function Hub.SetMenuOpen(State)
+
+    Settings.MenuOpen = State
+
+    if Hub.Main then
+
+        Hub.Main.Visible = State
+
+    end
+
+    if Hub.FloatingButton then
+
+        Hub.FloatingButton.Visible =
+            not State
+
+    end
+
+end
+
+----------------------------------------------------
+-- FLOATING BUTTON
+----------------------------------------------------
+
+local FloatingButton = Instance.new("TextButton")
+
+FloatingButton.Name =
+    "FloatingButton"
+
+FloatingButton.Size =
+    UDim2.fromOffset(46, 46)
+
+FloatingButton.Position =
+    UDim2.new(
+        0,
+        18,
+        0.5,
+        -23
+    )
+
+FloatingButton.BackgroundColor3 =
+    Theme.Background2
+
+FloatingButton.BorderSizePixel = 0
+
+FloatingButton.AutoButtonColor = false
+
+FloatingButton.Text = "R"
+
+FloatingButton.TextColor3 =
+    Theme.Purple
+
+FloatingButton.Font =
+    Enum.Font.GothamBlack
+
+FloatingButton.TextSize = 19
+
+FloatingButton.Visible = false
+
+FloatingButton.ZIndex = 100
+
+FloatingButton.Parent = ScreenGui
+
+Hub.FloatingButton =
+    FloatingButton
+
+----------------------------------------------------
+-- FLOATING CORNER
+----------------------------------------------------
+
+Hub.Corner(
+    FloatingButton,
+    8
+)
+
+----------------------------------------------------
+-- FLOATING BORDER
+----------------------------------------------------
+
+local FloatingStroke =
+    Instance.new("UIStroke")
+
+FloatingStroke.Color =
+    Theme.Purple
+
+FloatingStroke.Thickness = 1.3
+
+FloatingStroke.Transparency = 0
+
+FloatingStroke.Parent =
+    FloatingButton
+
+Hub.FloatingStroke =
+    FloatingStroke
+
+----------------------------------------------------
+-- FLOATING ACCENT
+----------------------------------------------------
+
+local FloatingAccent =
+    Instance.new("Frame")
+
+FloatingAccent.Size =
+    UDim2.new(1, 0, 0, 2)
+
+FloatingAccent.Position =
+    UDim2.new(0, 0, 1, -2)
+
+FloatingAccent.BackgroundColor3 =
+    Theme.Purple
+
+FloatingAccent.BorderSizePixel = 0
+
+FloatingAccent.ZIndex = 101
+
+FloatingAccent.Parent =
+    FloatingButton
+
+Hub.FloatingAccent =
+    FloatingAccent
+
+----------------------------------------------------
+-- RESTORE
+----------------------------------------------------
+
+FloatingButton.Activated:Connect(function()
+
+    Hub.SetMenuOpen(true)
+
 end)
 
-UIS.InputChanged:Connect(function(Input)
+----------------------------------------------------
+-- HOVER
+----------------------------------------------------
 
-    if Input == MiniInput and MiniDragging then
+FloatingButton.MouseEnter:Connect(function()
 
-        local Delta = Input.Position - MiniStart
+    Hub.Tween(
+        FloatingButton,
+        {
+            BackgroundColor3 =
+                Theme.RowHover
+        },
+        0.12
+    )
 
-        Mini.Position = UDim2.new(
-            MiniPosition.X.Scale,
-            MiniPosition.X.Offset + Delta.X,
-            MiniPosition.Y.Scale,
-            MiniPosition.Y.Offset + Delta.Y
+end)
+
+FloatingButton.MouseLeave:Connect(function()
+
+    Hub.Tween(
+        FloatingButton,
+        {
+            BackgroundColor3 =
+                Theme.Background2
+        },
+        0.12
+    )
+
+end)
+
+----------------------------------------------------
+-- MOBILE DRAG SUPPORT FOR FLOATING BUTTON
+----------------------------------------------------
+
+local FloatingDragging = false
+local FloatingDragStart
+local FloatingStartPosition
+
+FloatingButton.InputBegan:Connect(function(Input)
+
+    if Input.UserInputType ==
+        Enum.UserInputType.MouseButton1
+        or
+        Input.UserInputType ==
+        Enum.UserInputType.Touch then
+
+        FloatingDragging = true
+
+        FloatingDragStart =
+            Input.Position
+
+        FloatingStartPosition =
+            FloatingButton.Position
+
+    end
+
+end)
+
+FloatingButton.InputChanged:Connect(function(Input)
+
+    if Input.UserInputType ==
+        Enum.UserInputType.MouseMovement
+        or
+        Input.UserInputType ==
+        Enum.UserInputType.Touch then
+
+        Hub.FloatingDragInput = Input
+
+    end
+
+end)
+
+UserInputService.InputChanged:Connect(
+    function(Input)
+
+        if not FloatingDragging then
+            return
+        end
+
+        if Input ~= Hub.FloatingDragInput then
+            return
+        end
+
+        local Delta =
+            Input.Position
+            - FloatingDragStart
+
+        FloatingButton.Position =
+            UDim2.new(
+                FloatingStartPosition.X.Scale,
+                FloatingStartPosition.X.Offset
+                    + Delta.X,
+
+                FloatingStartPosition.Y.Scale,
+                FloatingStartPosition.Y.Offset
+                    + Delta.Y
+            )
+
+    end
+)
+
+UserInputService.InputEnded:Connect(
+    function(Input)
+
+        if Input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            Input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            FloatingDragging = false
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- INITIAL STATE
+----------------------------------------------------
+
+Hub.SetMenuOpen(true)
+
+Hub.ApplyMenuColor()
+
+----------------------------------------------------
+-- READY
+----------------------------------------------------
+
+print(
+    "Rusted v"
+    .. RUSTED_VERSION
+    .. " | Part 1/6 loaded"
+)
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 2/6
+             SIDEBAR / PAGES / HEADER
+====================================================
+]]
+
+----------------------------------------------------
+-- HEADER
+----------------------------------------------------
+
+local Header = Hub.New("Frame", {
+    Name = "Header",
+    Size = UDim2.new(1, 0, 0, 56),
+    Position = UDim2.fromOffset(0, 0),
+    BackgroundColor3 = Theme.Background2,
+    BorderSizePixel = 0,
+}, Main)
+
+local HeaderLine = Hub.New("Frame", {
+    Size = UDim2.new(1, 0, 0, 1),
+    Position = UDim2.new(0, 0, 1, -1),
+    BackgroundColor3 = Theme.Border,
+    BorderSizePixel = 0,
+}, Header)
+
+----------------------------------------------------
+-- LOGO
+----------------------------------------------------
+
+local Logo = Hub.New("TextLabel", {
+    Name = "Logo",
+    Size = UDim2.fromOffset(140, 27),
+    Position = UDim2.fromOffset(18, 7),
+    BackgroundTransparency = 1,
+    Text = "RUSTED",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.GothamBlack,
+    TextSize = 20,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, Header)
+
+local LogoAccent = Hub.New("Frame", {
+    Size = UDim2.fromOffset(3, 23),
+    Position = UDim2.fromOffset(0, 2),
+    BackgroundColor3 = Theme.Purple,
+    BorderSizePixel = 0,
+}, Logo)
+
+local Version = Hub.New("TextLabel", {
+    Size = UDim2.fromOffset(70, 17),
+    Position = UDim2.fromOffset(19, 33),
+    BackgroundTransparency = 1,
+    Text = "v" .. Hub.Version,
+    TextColor3 = Theme.Text3,
+    Font = Enum.Font.Gotham,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, Header)
+
+----------------------------------------------------
+-- MINIMIZE
+----------------------------------------------------
+
+local MinimizeButton = Hub.New("TextButton", {
+    Name = "Minimize",
+    Size = UDim2.fromOffset(32, 32),
+    Position = UDim2.new(1, -73, 0, 12),
+    BackgroundColor3 = Theme.Panel2,
+    BorderSizePixel = 0,
+    AutoButtonColor = false,
+    Text = "—",
+    TextColor3 = Theme.Text2,
+    Font = Enum.Font.GothamBold,
+    TextSize = 17,
+}, Header)
+
+Hub.Corner(MinimizeButton, 5)
+Hub.Stroke(MinimizeButton, Theme.Border, 1, 0.25)
+
+----------------------------------------------------
+-- CLOSE
+----------------------------------------------------
+
+local CloseButton = Hub.New("TextButton", {
+    Name = "Close",
+    Size = UDim2.fromOffset(32, 32),
+    Position = UDim2.new(1, -37, 0, 12),
+    BackgroundColor3 = Theme.Panel2,
+    BorderSizePixel = 0,
+    AutoButtonColor = false,
+    Text = "×",
+    TextColor3 = Theme.Text2,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+}, Header)
+
+Hub.Corner(CloseButton, 5)
+Hub.Stroke(CloseButton, Theme.Border, 1, 0.25)
+
+----------------------------------------------------
+-- SIDEBAR
+----------------------------------------------------
+
+local Sidebar = Hub.New("Frame", {
+    Name = "Sidebar",
+    Size = UDim2.new(0, 158, 1, -56),
+    Position = UDim2.fromOffset(0, 56),
+    BackgroundColor3 = Theme.Background2,
+    BorderSizePixel = 0,
+}, Main)
+
+local SidebarLine = Hub.New("Frame", {
+    Size = UDim2.fromOffset(1, 1),
+    Position = UDim2.new(1, -1, 0, 0),
+    SizeConstraint = Enum.SizeConstraint.RelativeYY,
+    BackgroundColor3 = Theme.Border,
+    BorderSizePixel = 0,
+}, Sidebar)
+
+local SidebarTitle = Hub.New("TextLabel", {
+    Size = UDim2.new(1, -28, 0, 22),
+    Position = UDim2.fromOffset(14, 13),
+    BackgroundTransparency = 1,
+    Text = "MENU",
+    TextColor3 = Theme.Text3,
+    Font = Enum.Font.GothamBold,
+    TextSize = 9,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, Sidebar)
+
+----------------------------------------------------
+-- NAVIGATION
+----------------------------------------------------
+
+local Navigation = Hub.New("Frame", {
+    Name = "Navigation",
+    Size = UDim2.new(1, -18, 1, -48),
+    Position = UDim2.fromOffset(9, 40),
+    BackgroundTransparency = 1,
+}, Sidebar)
+
+local NavLayout = Hub.New("UIListLayout", {
+    Padding = UDim.new(0, 4),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+}, Navigation)
+
+----------------------------------------------------
+-- CONTENT
+----------------------------------------------------
+
+local Content = Hub.New("Frame", {
+    Name = "Content",
+    Size = UDim2.new(1, -158, 1, -56),
+    Position = UDim2.fromOffset(158, 56),
+    BackgroundColor3 = Theme.Background,
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+}, Main)
+
+----------------------------------------------------
+-- PAGE HEADER
+----------------------------------------------------
+
+local ContentHeader = Hub.New("Frame", {
+    Size = UDim2.new(1, -32, 0, 68),
+    Position = UDim2.fromOffset(16, 0),
+    BackgroundTransparency = 1,
+}, Content)
+
+local PageTitle = Hub.New("TextLabel", {
+    Name = "PageTitle",
+    Size = UDim2.new(1, -10, 0, 28),
+    Position = UDim2.fromOffset(0, 11),
+    BackgroundTransparency = 1,
+    Text = "Visual",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.GothamBold,
+    TextSize = 19,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, ContentHeader)
+
+local PageDescription = Hub.New("TextLabel", {
+    Name = "PageDescription",
+    Size = UDim2.new(1, -10, 0, 22),
+    Position = UDim2.fromOffset(0, 39),
+    BackgroundTransparency = 1,
+    Text = "Visual player information and camera settings.",
+    TextColor3 = Theme.Text3,
+    Font = Enum.Font.Gotham,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, ContentHeader)
+
+Hub.PageTitle = PageTitle
+Hub.PageDescription = PageDescription
+
+----------------------------------------------------
+-- PAGE HOLDER
+----------------------------------------------------
+
+local PageHolder = Hub.New("Frame", {
+    Name = "PageHolder",
+    Size = UDim2.new(1, -32, 1, -78),
+    Position = UDim2.fromOffset(16, 72),
+    BackgroundTransparency = 1,
+    ClipsDescendants = true,
+}, Content)
+
+Hub.PageHolder = PageHolder
+
+----------------------------------------------------
+-- CREATE PAGE
+----------------------------------------------------
+
+function Hub.CreatePage(Name)
+
+    local Page = Hub.New("ScrollingFrame", {
+        Name = Name,
+        Size = UDim2.fromScale(1, 1),
+        Position = UDim2.fromOffset(0, 0),
+
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Theme.Purple,
+        ScrollBarImageTransparency = 0.2,
+
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+
+        ScrollingDirection =
+            Enum.ScrollingDirection.Y,
+
+        Visible = false,
+    }, PageHolder)
+
+    local Layout = Hub.New("UIListLayout", {
+        Padding = UDim.new(0, 6),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+    }, Page)
+
+    local Padding = Hub.New("UIPadding", {
+        PaddingRight = UDim.new(0, 7),
+        PaddingBottom = UDim.new(0, 8),
+    }, Page)
+
+    Hub.Pages[Name] = Page
+
+    return Page
+end
+
+----------------------------------------------------
+-- PAGES
+----------------------------------------------------
+
+local VisualPage =
+    Hub.CreatePage("Visual")
+
+local CombatPage =
+    Hub.CreatePage("Combat")
+
+local MovementPage =
+    Hub.CreatePage("Movement")
+
+local MiscPage =
+    Hub.CreatePage("Misc")
+
+local SettingsPage =
+    Hub.CreatePage("Settings")
+
+----------------------------------------------------
+-- PAGE BUTTON
+----------------------------------------------------
+
+function Hub.CreatePageButton(
+    Name,
+    Icon,
+    Order
+)
+
+    local Button = Hub.New("TextButton", {
+
+        Name = Name .. "Button",
+
+        Size = UDim2.new(1, 0, 0, 37),
+
+        BackgroundColor3 =
+            Theme.Background2,
+
+        BorderSizePixel = 0,
+
+        AutoButtonColor = false,
+
+        Text = "",
+
+        LayoutOrder =
+            Order or 1,
+
+    }, Navigation)
+
+    Hub.Corner(Button, 5)
+
+    ------------------------------------------------
+    -- ACTIVE BAR
+    ------------------------------------------------
+
+    local Accent = Hub.New("Frame", {
+
+        Name = "Accent",
+
+        Size = UDim2.fromOffset(3, 21),
+
+        Position =
+            UDim2.new(0, 0, 0.5, -10),
+
+        BackgroundColor3 =
+            Theme.Purple,
+
+        BorderSizePixel = 0,
+
+        Visible = false,
+
+    }, Button)
+
+    ------------------------------------------------
+    -- ICON
+    ------------------------------------------------
+
+    local IconLabel = Hub.New("TextLabel", {
+
+        Name = "Icon",
+
+        Size = UDim2.fromOffset(28, 37),
+
+        Position =
+            UDim2.fromOffset(9, 0),
+
+        BackgroundTransparency = 1,
+
+        Text = Icon,
+
+        TextColor3 =
+            Theme.Text3,
+
+        Font =
+            Enum.Font.GothamBold,
+
+        TextSize = 12,
+
+    }, Button)
+
+    ------------------------------------------------
+    -- NAME
+    ------------------------------------------------
+
+    local TextLabel = Hub.New("TextLabel", {
+
+        Name = "Text",
+
+        Size =
+            UDim2.new(1, -44, 1, 0),
+
+        Position =
+            UDim2.fromOffset(39, 0),
+
+        BackgroundTransparency = 1,
+
+        Text = Name,
+
+        TextColor3 =
+            Theme.Text2,
+
+        Font =
+            Enum.Font.GothamMedium,
+
+        TextSize = 11,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
+    }, Button)
+
+    Hub.PageButtons[Name] = {
+
+        Button = Button,
+        Accent = Accent,
+        Icon = IconLabel,
+        Text = TextLabel,
+
+    }
+
+    ------------------------------------------------
+    -- CLICK
+    ------------------------------------------------
+
+    Button.Activated:Connect(function()
+
+        Hub.SwitchPage(Name)
+
+    end)
+
+    ------------------------------------------------
+    -- HOVER
+    ------------------------------------------------
+
+    Button.MouseEnter:Connect(function()
+
+        if Hub.CurrentPage ~= Name then
+
+            Hub.Tween(
+                Button,
+                {
+                    BackgroundColor3 =
+                        Theme.RowHover
+                },
+                0.1
+            )
+
+        end
+
+    end)
+
+    Button.MouseLeave:Connect(function()
+
+        if Hub.CurrentPage ~= Name then
+
+            Hub.Tween(
+                Button,
+                {
+                    BackgroundColor3 =
+                        Theme.Background2
+                },
+                0.1
+            )
+
+        end
+
+    end)
+
+    return Button
+end
+
+----------------------------------------------------
+-- NAV BUTTONS
+----------------------------------------------------
+
+Hub.CreatePageButton(
+    "Visual",
+    "◈",
+    1
+)
+
+Hub.CreatePageButton(
+    "Combat",
+    "⌁",
+    2
+)
+
+Hub.CreatePageButton(
+    "Movement",
+    "↗",
+    3
+)
+
+Hub.CreatePageButton(
+    "Misc",
+    "◆",
+    4
+)
+
+Hub.CreatePageButton(
+    "Settings",
+    "⚙",
+    5
+)
+
+----------------------------------------------------
+-- PAGE SWITCH
+----------------------------------------------------
+
+function Hub.SwitchPage(Name)
+
+    local Page =
+        Hub.Pages[Name]
+
+    if not Page then
+        return
+    end
+
+    ------------------------------------------------
+    -- SHOW PAGE
+    ------------------------------------------------
+
+    for PageName, PageObject
+        in pairs(Hub.Pages) do
+
+        PageObject.Visible =
+            PageName == Name
+
+    end
+
+    ------------------------------------------------
+    -- UPDATE SIDEBAR
+    ------------------------------------------------
+
+    for PageName, Data
+        in pairs(Hub.PageButtons) do
+
+        local Active =
+            PageName == Name
+
+        Data.Accent.Visible =
+            Active
+
+        if Active then
+
+            Data.Button.BackgroundColor3 =
+                Theme.RowHover
+
+            Data.Icon.TextColor3 =
+                Hub.GetMenuColor()
+
+            Data.Text.TextColor3 =
+                Theme.Text
+
+        else
+
+            Data.Button.BackgroundColor3 =
+                Theme.Background2
+
+            Data.Icon.TextColor3 =
+                Theme.Text3
+
+            Data.Text.TextColor3 =
+                Theme.Text2
+
+        end
+
+    end
+
+    ------------------------------------------------
+    -- DESCRIPTION
+    ------------------------------------------------
+
+    local Descriptions = {
+
+        Visual =
+            "Visual player information and camera settings.",
+
+        Combat =
+            "Combat assistance and targeting settings.",
+
+        Movement =
+            "Movement and character controls.",
+
+        Misc =
+            "Additional gameplay and visual options.",
+
+        Settings =
+            "Rusted interface and configuration.",
+    }
+
+    Hub.CurrentPage =
+        Name
+
+    Hub.SetPageTitle(
+        Name,
+        Descriptions[Name] or ""
+    )
+
+end
+
+----------------------------------------------------
+-- HEADER BUTTON HOVER
+----------------------------------------------------
+
+MinimizeButton.MouseEnter:Connect(function()
+
+    Hub.Tween(
+        MinimizeButton,
+        {
+            BackgroundColor3 =
+                Theme.RowHover
+        },
+        0.1
+    )
+
+end)
+
+MinimizeButton.MouseLeave:Connect(function()
+
+    Hub.Tween(
+        MinimizeButton,
+        {
+            BackgroundColor3 =
+                Theme.Panel2
+        },
+        0.1
+    )
+
+end)
+
+CloseButton.MouseEnter:Connect(function()
+
+    Hub.Tween(
+        CloseButton,
+        {
+            BackgroundColor3 =
+                Theme.RowHover
+        },
+        0.1
+    )
+
+end)
+
+CloseButton.MouseLeave:Connect(function()
+
+    Hub.Tween(
+        CloseButton,
+        {
+            BackgroundColor3 =
+                Theme.Panel2
+        },
+        0.1
+    )
+
+end)
+
+----------------------------------------------------
+-- MINIMIZE
+----------------------------------------------------
+
+MinimizeButton.Activated:Connect(function()
+
+    Hub.SetMenuOpen(false)
+
+end)
+
+----------------------------------------------------
+-- CLOSE
+----------------------------------------------------
+
+CloseButton.Activated:Connect(function()
+
+    Hub.Settings.MenuOpen = false
+
+    Main.Visible = false
+
+    FloatingButton.Visible = false
+
+    task.delay(0.1, function()
+
+        if ScreenGui then
+            ScreenGui:Destroy()
+        end
+
+    end)
+
+end)
+
+----------------------------------------------------
+-- DEFAULT PAGE
+----------------------------------------------------
+
+Hub.SwitchPage("Visual")
+
+print(
+    "Rusted v"
+    .. Hub.Version
+    .. " | Part 2/6 loaded"
+)
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 3/6
+          TOGGLE / SLIDER / DROPDOWN
+====================================================
+]]
+
+----------------------------------------------------
+-- CONTROL COLORS
+----------------------------------------------------
+
+local function GetAccent()
+    return Hub.GetMenuColor()
+end
+
+----------------------------------------------------
+-- CONTROL HOVER
+----------------------------------------------------
+
+local function RowHover(Row)
+    Row.MouseEnter:Connect(function()
+        Hub.Tween(Row, {
+            BackgroundColor3 = Theme.RowHover
+        }, 0.10)
+    end)
+
+    Row.MouseLeave:Connect(function()
+        Hub.Tween(Row, {
+            BackgroundColor3 = Theme.Row
+        }, 0.10)
+    end)
+end
+
+----------------------------------------------------
+-- SECTION
+----------------------------------------------------
+
+function Hub.CreateSection(Page, Text)
+
+    local Section = Hub.New("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 24),
+        BackgroundTransparency = 1,
+
+        Text = string.upper(Text),
+
+        TextColor3 = Theme.Text3,
+        Font = Enum.Font.GothamBold,
+        TextSize = 9,
+
+        TextXAlignment = Enum.TextXAlignment.Left,
+    }, Page)
+
+    return Section
+end
+
+----------------------------------------------------
+-- TOGGLE
+----------------------------------------------------
+
+function Hub.CreateToggle(
+    Page,
+    Name,
+    Description,
+    SettingName,
+    Callback
+)
+
+    local Row = Hub.New("Frame", {
+        Name = Name .. "Toggle",
+
+        Size = UDim2.new(1, 0, 0, 48),
+
+        BackgroundColor3 = Theme.Row,
+
+        BorderSizePixel = 0,
+    }, Page)
+
+    Hub.Corner(Row, 5)
+    Hub.Stroke(Row, Theme.Border, 1, 0.55)
+
+    ------------------------------------------------
+    -- TITLE
+    ------------------------------------------------
+
+    local Title = Hub.New("TextLabel", {
+        Size = UDim2.new(1, -75, 0, 19),
+        Position = UDim2.fromOffset(12, 6),
+
+        BackgroundTransparency = 1,
+
+        Text = Name,
+
+        TextColor3 = Theme.Text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 11,
+
+        TextXAlignment = Enum.TextXAlignment.Left,
+    }, Row)
+
+    ------------------------------------------------
+    -- DESCRIPTION
+    ------------------------------------------------
+
+    local Desc = Hub.New("TextLabel", {
+        Size = UDim2.new(1, -75, 0, 16),
+        Position = UDim2.fromOffset(12, 26),
+
+        BackgroundTransparency = 1,
+
+        Text = Description or "",
+
+        TextColor3 = Theme.Text3,
+        Font = Enum.Font.Gotham,
+        TextSize = 8,
+
+        TextXAlignment = Enum.TextXAlignment.Left,
+
+        TextTruncate =
+            Enum.TextTruncate.AtEnd,
+    }, Row)
+
+    ------------------------------------------------
+    -- TOGGLE BUTTON
+    ------------------------------------------------
+
+    local Button = Hub.New("TextButton", {
+        Size = UDim2.fromOffset(38, 20),
+        Position = UDim2.new(1, -51, 0.5, -10),
+
+        BackgroundColor3 =
+            Theme.Panel2,
+
+        BorderSizePixel = 0,
+
+        AutoButtonColor = false,
+
+        Text = "",
+    }, Row)
+
+    Hub.Corner(Button, 10)
+
+    Hub.Stroke(
+        Button,
+        Theme.Border,
+        1,
+        0.25
+    )
+
+    ------------------------------------------------
+    -- KNOB
+    ------------------------------------------------
+
+    local Knob = Hub.New("Frame", {
+        Size = UDim2.fromOffset(14, 14),
+
+        Position =
+            UDim2.fromOffset(3, 3),
+
+        BackgroundColor3 =
+            Theme.Text3,
+
+        BorderSizePixel = 0,
+    }, Button)
+
+    Hub.Corner(Knob, 7)
+
+    ------------------------------------------------
+    -- STATE
+    ------------------------------------------------
+
+    local State =
+        Settings[SettingName] == true
+
+    local function Update(Value)
+
+        State = Value
+
+        Settings[SettingName] =
+            Value
+
+        if Value then
+
+            Hub.Tween(
+                Button,
+                {
+                    BackgroundColor3 =
+                        GetAccent()
+                },
+                0.12
+            )
+
+            Hub.Tween(
+                Knob,
+                {
+                    Position =
+                        UDim2.new(
+                            1,
+                            -17,
+                            0,
+                            3
+                        ),
+
+                    BackgroundColor3 =
+                        Theme.White,
+                },
+                0.12
+            )
+
+        else
+
+            Hub.Tween(
+                Button,
+                {
+                    BackgroundColor3 =
+                        Theme.Panel2
+                },
+                0.12
+            )
+
+            Hub.Tween(
+                Knob,
+                {
+                    Position =
+                        UDim2.fromOffset(3, 3),
+
+                    BackgroundColor3 =
+                        Theme.Text3,
+                },
+                0.12
+            )
+
+        end
+
+        Hub.SafeCall(
+            Callback,
+            Value
         )
     end
+
+    ------------------------------------------------
+    -- CLICK
+    ------------------------------------------------
+
+    Button.Activated:Connect(function()
+
+        Update(not State)
+
+    end)
+
+    ------------------------------------------------
+    -- SAVE
+    ------------------------------------------------
+
+    Hub.ToggleObjects[SettingName] = {
+        Row = Row,
+        Button = Button,
+        Knob = Knob,
+        Update = Update,
+    }
+
+    Hub.Controls[SettingName] = Row
+
+    RowHover(Row)
+
+    Update(State)
+
+    return Row
+end
+
+----------------------------------------------------
+-- SLIDER
+----------------------------------------------------
+
+function Hub.CreateSlider(
+    Page,
+    Name,
+    Description,
+    SettingName,
+    Minimum,
+    Maximum,
+    Step,
+    Callback
+)
+
+    local Row = Hub.New("Frame", {
+        Name = Name .. "Slider",
+
+        Size = UDim2.new(1, 0, 0, 57),
+
+        BackgroundColor3 = Theme.Row,
+
+        BorderSizePixel = 0,
+    }, Page)
+
+    Hub.Corner(Row, 5)
+    Hub.Stroke(Row, Theme.Border, 1, 0.55)
+
+    ------------------------------------------------
+    -- TITLE
+    ------------------------------------------------
+
+    local Title = Hub.New("TextLabel", {
+        Size = UDim2.new(1, -75, 0, 18),
+        Position = UDim2.fromOffset(12, 5),
+
+        BackgroundTransparency = 1,
+
+        Text = Name,
+
+        TextColor3 = Theme.Text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 11,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+    }, Row)
+
+    ------------------------------------------------
+    -- DESCRIPTION
+    ------------------------------------------------
+
+    local Desc = Hub.New("TextLabel", {
+        Size = UDim2.new(1, -75, 0, 15),
+        Position = UDim2.fromOffset(12, 22),
+
+        BackgroundTransparency = 1,
+
+        Text = Description or "",
+
+        TextColor3 = Theme.Text3,
+        Font = Enum.Font.Gotham,
+        TextSize = 8,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+    }, Row)
+
+    ------------------------------------------------
+    -- VALUE
+    ------------------------------------------------
+
+    local ValueLabel = Hub.New("TextLabel", {
+        Size = UDim2.fromOffset(50, 18),
+
+        Position =
+            UDim2.new(1, -61, 0, 8),
+
+        BackgroundTransparency = 1,
+
+        TextColor3 =
+            GetAccent(),
+
+        Font =
+            Enum.Font.GothamBold,
+
+        TextSize = 10,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Right,
+
+        Text = tostring(
+            Settings[SettingName]
+            or Minimum
+        ),
+    }, Row)
+
+    ------------------------------------------------
+    -- BAR
+    ------------------------------------------------
+
+    local Bar = Hub.New("Frame", {
+        Size =
+            UDim2.new(1, -24, 0, 5),
+
+        Position =
+            UDim2.new(0, 12, 1, -13),
+
+        BackgroundColor3 =
+            Theme.Panel2,
+
+        BorderSizePixel = 0,
+    }, Row)
+
+    Hub.Corner(Bar, 3)
+
+    ------------------------------------------------
+    -- FILL
+    ------------------------------------------------
+
+    local Fill = Hub.New("Frame", {
+        Size =
+            UDim2.new(0, 0, 1, 0),
+
+        BackgroundColor3 =
+            GetAccent(),
+
+        BorderSizePixel = 0,
+    }, Bar)
+
+    Hub.Corner(Fill, 3)
+
+    ------------------------------------------------
+    -- VALUE
+    ------------------------------------------------
+
+    local Current =
+        tonumber(Settings[SettingName])
+        or Minimum
+
+    local Dragging = false
+
+    local function RoundValue(Value)
+
+        if not Step or Step <= 0 then
+            return Value
+        end
+
+        return math.floor(
+            (Value / Step) + 0.5
+        ) * Step
+    end
+
+    local function SetValue(Value)
+
+        Value = math.clamp(
+            Value,
+            Minimum,
+            Maximum
+        )
+
+        Value = RoundValue(Value)
+
+        Current = Value
+
+        Settings[SettingName] =
+            Value
+
+        local Alpha =
+            (Value - Minimum)
+            / (Maximum - Minimum)
+
+        Fill.Size =
+            UDim2.new(
+                Alpha,
+                0,
+                1,
+                0
+            )
+
+        ValueLabel.Text =
+            tostring(Value)
+
+        Hub.SafeCall(
+            Callback,
+            Value
+        )
+    end
+
+    local function SetFromPosition(X)
+
+        local Start =
+            Bar.AbsolutePosition.X
+
+        local Width =
+            Bar.AbsoluteSize.X
+
+        local Alpha =
+            math.clamp(
+                (X - Start) / Width,
+                0,
+                1
+            )
+
+        local Value =
+            Minimum
+            + ((Maximum - Minimum) * Alpha)
+
+        SetValue(Value)
+    end
+
+    ------------------------------------------------
+    -- INPUT
+    ------------------------------------------------
+
+    Bar.InputBegan:Connect(function(Input)
+
+        if Input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            Input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            Dragging = true
+
+            SetFromPosition(
+                Input.Position.X
+            )
+
+        end
+
+    end)
+
+    UserInputService.InputChanged:Connect(
+        function(Input)
+
+            if not Dragging then
+                return
+            end
+
+            if Input.UserInputType ==
+                Enum.UserInputType.MouseMovement
+                or
+                Input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                SetFromPosition(
+                    Input.Position.X
+                )
+
+            end
+
+        end
+    )
+
+    UserInputService.InputEnded:Connect(
+        function(Input)
+
+            if Input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+                or
+                Input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                Dragging = false
+
+            end
+
+        end
+    )
+
+    ------------------------------------------------
+    -- SAVE
+    ------------------------------------------------
+
+    Hub.SliderObjects[SettingName] = {
+        Row = Row,
+        Bar = Bar,
+        Fill = Fill,
+        ValueLabel = ValueLabel,
+        SetValue = SetValue,
+    }
+
+    Hub.Controls[SettingName] = Row
+
+    RowHover(Row)
+
+    SetValue(Current)
+
+    return Row
+end
+
+----------------------------------------------------
+-- DROPDOWN
+----------------------------------------------------
+
+function Hub.CreateDropdown(
+    Page,
+    Name,
+    Description,
+    SettingName,
+    Options,
+    Callback
+)
+
+    local Row = Hub.New("Frame", {
+        Name = Name .. "Dropdown",
+
+        Size = UDim2.new(1, 0, 0, 48),
+
+        BackgroundColor3 = Theme.Row,
+
+        BorderSizePixel = 0,
+
+        ClipsDescendants = true,
+    }, Page)
+
+    Hub.Corner(Row, 5)
+    Hub.Stroke(Row, Theme.Border, 1, 0.55)
+
+    ------------------------------------------------
+    -- TITLE
+    ------------------------------------------------
+
+    local Title = Hub.New("TextLabel", {
+        Size =
+            UDim2.new(1, -150, 0, 18),
+
+        Position =
+            UDim2.fromOffset(12, 6),
+
+        BackgroundTransparency = 1,
+
+        Text = Name,
+
+        TextColor3 =
+            Theme.Text,
+
+        Font =
+            Enum.Font.GothamMedium,
+
+        TextSize = 11,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+    }, Row)
+
+    ------------------------------------------------
+    -- DESCRIPTION
+    ------------------------------------------------
+
+    local Desc = Hub.New("TextLabel", {
+        Size =
+            UDim2.new(1, -150, 0, 15),
+
+        Position =
+            UDim2.fromOffset(12, 25),
+
+        BackgroundTransparency = 1,
+
+        Text = Description or "",
+
+        TextColor3 =
+            Theme.Text3,
+
+        Font =
+            Enum.Font.Gotham,
+
+        TextSize = 8,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+    }, Row)
+
+    ------------------------------------------------
+    -- BUTTON
+    ------------------------------------------------
+
+    local Button = Hub.New("TextButton", {
+        Size = UDim2.fromOffset(110, 28),
+
+        Position =
+            UDim2.new(1, -121, 0, 10),
+
+        BackgroundColor3 =
+            Theme.Panel2,
+
+        BorderSizePixel = 0,
+
+        AutoButtonColor = false,
+
+        Text = "",
+    }, Row)
+
+    Hub.Corner(Button, 5)
+    Hub.Stroke(Button, Theme.Border, 1, 0.3)
+
+    ------------------------------------------------
+    -- CURRENT VALUE
+    ------------------------------------------------
+
+    local CurrentValue =
+        Settings[SettingName]
+        or Options[1]
+
+    local ValueText = Hub.New("TextLabel", {
+
+        Size =
+            UDim2.new(1, -25, 1, 0),
+
+        Position =
+            UDim2.fromOffset(8, 0),
+
+        BackgroundTransparency = 1,
+
+        Text =
+            tostring(CurrentValue),
+
+        TextColor3 =
+            Theme.Text2,
+
+        Font =
+            Enum.Font.GothamMedium,
+
+        TextSize = 9,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left,
+
+    }, Button)
+
+    local Arrow = Hub.New("TextLabel", {
+
+        Size =
+            UDim2.fromOffset(20, 28),
+
+        Position =
+            UDim2.new(1, -22, 0, 0),
+
+        BackgroundTransparency = 1,
+
+        Text = "›",
+
+        TextColor3 =
+            Theme.Text3,
+
+        Font =
+            Enum.Font.GothamBold,
+
+        TextSize = 14,
+
+    }, Button)
+
+    ------------------------------------------------
+    -- DROPDOWN LIST
+    ------------------------------------------------
+
+    local List = Hub.New("Frame", {
+
+        Name = "List",
+
+        Size =
+            UDim2.new(1, -24, 0, 0),
+
+        Position =
+            UDim2.fromOffset(12, 43),
+
+        BackgroundColor3 =
+            Theme.Panel2,
+
+        BorderSizePixel = 0,
+
+        Visible = false,
+
+    }, Row)
+
+    Hub.Corner(List, 5)
+    Hub.Stroke(List, Theme.Border, 1, 0.2)
+
+    local ListLayout = Hub.New(
+        "UIListLayout",
+        {
+            Padding = UDim.new(0, 2),
+            SortOrder =
+                Enum.SortOrder.LayoutOrder,
+        },
+        List
+    )
+
+    ------------------------------------------------
+    -- UPDATE
+    ------------------------------------------------
+
+    local Open = false
+
+    local function Select(Value)
+
+        CurrentValue = Value
+
+        Settings[SettingName] =
+            Value
+
+        ValueText.Text =
+            tostring(Value)
+
+        Hub.SafeCall(
+            Callback,
+            Value
+        )
+
+        Open = false
+
+        List.Visible = false
+
+        Row.Size =
+            UDim2.new(1, 0, 0, 48)
+    end
+
+    ------------------------------------------------
+    -- OPTIONS
+    ------------------------------------------------
+
+    for Index, Option in ipairs(Options) do
+
+        local OptionButton =
+            Hub.New("TextButton", {
+
+                Size =
+                    UDim2.new(1, -4, 0, 27),
+
+                BackgroundColor3 =
+                    Theme.Panel2,
+
+                BorderSizePixel = 0,
+
+                AutoButtonColor = false,
+
+                Text =
+                    tostring(Option),
+
+                TextColor3 =
+                    Theme.Text2,
+
+                Font =
+                    Enum.Font.GothamMedium,
+
+                TextSize = 9,
+
+                LayoutOrder = Index,
+
+            }, List)
+
+        Hub.Corner(
+            OptionButton,
+            4
+        )
+
+        OptionButton.Activated:Connect(
+            function()
+
+                Select(Option)
+
+            end
+        )
+
+        OptionButton.MouseEnter:Connect(
+            function()
+
+                OptionButton.BackgroundColor3 =
+                    Theme.RowHover
+
+            end
+        )
+
+        OptionButton.MouseLeave:Connect(
+            function()
+
+                OptionButton.BackgroundColor3 =
+                    Theme.Panel2
+
+            end
+        )
+
+    end
+
+    ------------------------------------------------
+    -- OPEN / CLOSE
+    ------------------------------------------------
+
+    Button.Activated:Connect(function()
+
+        Open = not Open
+
+        List.Visible = Open
+
+        if Open then
+
+            Row.Size =
+                UDim2.new(
+                    1,
+                    0,
+                    0,
+                    50
+                    + (#Options * 29)
+                )
+
+        else
+
+            Row.Size =
+                UDim2.new(
+                    1,
+                    0,
+                    0,
+                    48
+                )
+
+        end
+
+    end)
+
+    ------------------------------------------------
+    -- SAVE
+    ------------------------------------------------
+
+    Hub.DropdownObjects[SettingName] = {
+
+        Row = Row,
+
+        Button = Button,
+
+        List = List,
+
+        ValueText = ValueText,
+
+        Select = Select,
+
+    }
+
+    Hub.Controls[SettingName] =
+        Row
+
+    RowHover(Row)
+
+    Hub.SafeCall(
+        Callback,
+        CurrentValue
+    )
+
+    return Row
+end
+
+----------------------------------------------------
+-- COLOR UPDATE
+----------------------------------------------------
+
+function Hub.RefreshControlColors()
+
+    local Accent =
+        GetAccent()
+
+    for _, Data in pairs(
+        Hub.ToggleObjects
+    ) do
+
+        if Data.Button then
+
+            local Enabled =
+                Settings[
+                    Data.SettingName
+                ]
+
+            if Enabled then
+                Data.Button.BackgroundColor3 =
+                    Accent
+            end
+
+        end
+
+    end
+
+    for _, Data in pairs(
+        Hub.SliderObjects
+    ) do
+
+        if Data.Fill then
+
+            Data.Fill.BackgroundColor3 =
+                Accent
+
+        end
+
+        if Data.ValueLabel then
+
+            Data.ValueLabel.TextColor3 =
+                Accent
+
+        end
+
+    end
+
+end
+
+----------------------------------------------------
+-- READY
+----------------------------------------------------
+
+print(
+    "Rusted v"
+    .. Hub.Version
+    .. " | Part 3/6 loaded"
+)
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 4/6
+              VISUAL / COMBAT
+====================================================
+]]
+
+----------------------------------------------------
+-- VISUAL PAGE
+----------------------------------------------------
+
+Hub.CreateSection(
+    VisualPage,
+    "PLAYER ESP"
+)
+
+----------------------------------------------------
+-- ESP DATA
+----------------------------------------------------
+
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "RustedESP"
+ESPFolder.Parent = ScreenGui
+
+Hub.ESPFolder = ESPFolder
+
+local function IsTeammate(Target)
+
+    if not Settings.TeamCheck then
+        return false
+    end
+
+    if not Player.Team or not Target.Team then
+        return false
+    end
+
+    return Player.Team == Target.Team
+end
+
+----------------------------------------------------
+-- REMOVE ESP
+----------------------------------------------------
+
+local function RemoveESP(Target)
+
+    local Data = Hub.ESPObjects[Target]
+
+    if not Data then
+        return
+    end
+
+    for _, Object in pairs(Data) do
+        pcall(function()
+            Object:Destroy()
+        end)
+    end
+
+    Hub.ESPObjects[Target] = nil
+end
+
+----------------------------------------------------
+-- CREATE ESP
+----------------------------------------------------
+
+local function CreateESP(Target)
+
+    if Target == Player then
+        return
+    end
+
+    if Hub.ESPObjects[Target] then
+        return
+    end
+
+    local Character = Target.Character
+
+    if not Character then
+        return
+    end
+
+    local Head =
+        Character:FindFirstChild("Head")
+
+    local Root =
+        Character:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+    if not Head or not Root then
+        return
+    end
+
+    local Data = {}
+
+    ------------------------------------------------
+    -- HIGHLIGHT
+    ------------------------------------------------
+
+    local Highlight = Instance.new("Highlight")
+
+    Highlight.Name =
+        "ESP_" .. Target.Name
+
+    Highlight.Adornee =
+        Character
+
+    Highlight.FillColor =
+        GetAccent()
+
+    Highlight.FillTransparency =
+        0.82
+
+    Highlight.OutlineColor =
+        GetAccent()
+
+    Highlight.OutlineTransparency =
+        0
+
+    Highlight.DepthMode =
+        Enum.HighlightDepthMode.AlwaysOnTop
+
+    Highlight.Enabled =
+        Settings.ESP
+
+    Highlight.Parent =
+        ESPFolder
+
+    Data.Highlight = Highlight
+
+    ------------------------------------------------
+    -- BILLBOARD
+    ------------------------------------------------
+
+    local Billboard =
+        Instance.new("BillboardGui")
+
+    Billboard.Name =
+        "Info_" .. Target.Name
+
+    Billboard.Adornee =
+        Head
+
+    Billboard.Size =
+        UDim2.fromOffset(150, 45)
+
+    Billboard.StudsOffset =
+        Vector3.new(0, 2.8, 0)
+
+    Billboard.AlwaysOnTop =
+        true
+
+    Billboard.Enabled =
+        Settings.ESP
+
+    Billboard.Parent =
+        ESPFolder
+
+    Data.Billboard =
+        Billboard
+
+    ------------------------------------------------
+    -- NAME
+    ------------------------------------------------
+
+    local NameLabel =
+        Instance.new("TextLabel")
+
+    NameLabel.Size =
+        UDim2.new(1, 0, 0, 17)
+
+    NameLabel.BackgroundTransparency =
+        1
+
+    NameLabel.Text =
+        Target.DisplayName
+
+    NameLabel.TextColor3 =
+        GetAccent()
+
+    NameLabel.Font =
+        Enum.Font.GothamBold
+
+    NameLabel.TextSize =
+        11
+
+    NameLabel.TextStrokeTransparency =
+        0.35
+
+    NameLabel.Visible =
+        Settings.NameESP
+
+    NameLabel.Parent =
+        Billboard
+
+    Data.Name = NameLabel
+
+    ------------------------------------------------
+    -- INFO
+    ------------------------------------------------
+
+    local InfoLabel =
+        Instance.new("TextLabel")
+
+    InfoLabel.Size =
+        UDim2.new(1, 0, 0, 16)
+
+    InfoLabel.Position =
+        UDim2.fromOffset(0, 17)
+
+    InfoLabel.BackgroundTransparency =
+        1
+
+    InfoLabel.TextColor3 =
+        Theme.Text
+
+    InfoLabel.Font =
+        Enum.Font.Gotham
+
+    InfoLabel.TextSize =
+        9
+
+    InfoLabel.TextStrokeTransparency =
+        0.45
+
+    InfoLabel.Visible =
+        Settings.DistanceESP
+        or Settings.HealthESP
+
+    InfoLabel.Parent =
+        Billboard
+
+    Data.Info = InfoLabel
+
+    ------------------------------------------------
+    -- STORE
+    ------------------------------------------------
+
+    Hub.ESPObjects[Target] =
+        Data
+end
+
+----------------------------------------------------
+-- UPDATE ESP
+----------------------------------------------------
+
+local function UpdateESP()
+
+    for _, Target in ipairs(
+        Players:GetPlayers()
+    ) do
+
+        if Target ~= Player then
+
+            if not Target.Character then
+                RemoveESP(Target)
+            elseif IsTeammate(Target) then
+                RemoveESP(Target)
+            else
+                CreateESP(Target)
+            end
+
+        end
+
+    end
+
+    for Target, Data in pairs(
+        Hub.ESPObjects
+    ) do
+
+        local Character =
+            Target.Character
+
+        local Humanoid =
+            Character
+            and Character:FindFirstChildOfClass(
+                "Humanoid"
+            )
+
+        local Root =
+            Character
+            and Character:FindFirstChild(
+                "HumanoidRootPart"
+            )
+
+        if not Character
+            or not Humanoid
+            or not Root then
+
+            RemoveESP(Target)
+
+        else
+
+            local Enabled =
+                Settings.ESP
+                and not IsTeammate(Target)
+
+            if Data.Highlight then
+
+                Data.Highlight.Enabled =
+                    Enabled
+
+                Data.Highlight.FillColor =
+                    GetAccent()
+
+                Data.Highlight.OutlineColor =
+                    GetAccent()
+
+            end
+
+            if Data.Billboard then
+
+                Data.Billboard.Enabled =
+                    Enabled
+
+            end
+
+            if Data.Name then
+
+                Data.Name.Visible =
+                    Enabled
+                    and Settings.NameESP
+
+                Data.Name.TextColor3 =
+                    GetAccent()
+
+            end
+
+            if Data.Info then
+
+                Data.Info.Visible =
+                    Enabled
+                    and (
+                        Settings.DistanceESP
+                        or Settings.HealthESP
+                    )
+
+                local Parts = {}
+
+                if Settings.HealthESP then
+
+                    table.insert(
+                        Parts,
+                        "HP "
+                        .. math.floor(
+                            Humanoid.Health
+                        )
+                    )
+
+                end
+
+                if Settings.DistanceESP then
+
+                    local MyRoot =
+                        Hub.GetRoot()
+
+                    if MyRoot then
+
+                        local Distance =
+                            (
+                                MyRoot.Position
+                                - Root.Position
+                            ).Magnitude
+
+                        table.insert(
+                            Parts,
+                            math.floor(
+                                Distance
+                            ) .. "m"
+                        )
+
+                    end
+
+                end
+
+                Data.Info.Text =
+                    table.concat(
+                        Parts,
+                        "  |  "
+                    )
+
+            end
+
+        end
+    end
+end
+
+----------------------------------------------------
+-- ESP TOGGLES
+----------------------------------------------------
+
+Hub.CreateToggle(
+    VisualPage,
+    "ESP",
+    "Highlight other players.",
+    "ESP",
+    function()
+
+        UpdateESP()
+
+    end
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Boxes",
+    "Show player highlight boxes.",
+    "BoxESP",
+    function(Value)
+
+        Settings.ESP =
+            Value
+            or Settings.ESP
+
+        UpdateESP()
+
+    end
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Names",
+    "Display player names.",
+    "NameESP",
+    function()
+
+        UpdateESP()
+
+    end
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Health",
+    "Display player health.",
+    "HealthESP",
+    function()
+
+        UpdateESP()
+
+    end
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Distance",
+    "Display player distance.",
+    "DistanceESP",
+    function()
+
+        UpdateESP()
+
+    end
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Misc Visuals",
+    "Additional visual player information.",
+    "TracerESP",
+    function()
+
+        UpdateESP()
+
+    end
+)
+
+----------------------------------------------------
+-- FOV CHANGER
+----------------------------------------------------
+
+Hub.CreateSection(
+    VisualPage,
+    "CAMERA"
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "FOV Changer",
+    "Change the camera field of view.",
+    "FOVChanger",
+    function(Value)
+
+        local Camera =
+            workspace.CurrentCamera
+
+        if not Camera then
+            return
+        end
+
+        if Value then
+            Camera.FieldOfView =
+                Settings.FOV
+        else
+            Camera.FieldOfView =
+                Hub.DefaultFOV
+        end
+
+    end
+)
+
+Hub.CreateSlider(
+    VisualPage,
+    "FOV",
+    "Camera field of view.",
+    "FOV",
+    60,
+    120,
+    1,
+    function(Value)
+
+        if Settings.FOVChanger then
+
+            local Camera =
+                workspace.CurrentCamera
+
+            if Camera then
+                Camera.FieldOfView =
+                    Value
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- SKYBOX
+----------------------------------------------------
+
+Hub.CreateToggle(
+    VisualPage,
+    "Skybox",
+    "Enable custom skybox mode.",
+    "Skybox",
+    function(Value)
+
+        if Value then
+
+            if not Lighting:FindFirstChild(
+                "RustedSky"
+            ) then
+
+                local Sky =
+                    Instance.new("Sky")
+
+                Sky.Name =
+                    "RustedSky"
+
+                Sky.Parent =
+                    Lighting
+
+                Sky.SkyboxBk =
+                    "rbxassetid://159454299"
+
+                Sky.SkyboxDn =
+                    "rbxassetid://159454296"
+
+                Sky.SkyboxFt =
+                    "rbxassetid://159454293"
+
+                Sky.SkyboxLf =
+                    "rbxassetid://159454286"
+
+                Sky.SkyboxRt =
+                    "rbxassetid://159454300"
+
+                Sky.SkyboxUp =
+                    "rbxassetid://159454288"
+
+            end
+
+        else
+
+            local Sky =
+                Lighting:FindFirstChild(
+                    "RustedSky"
+                )
+
+            if Sky then
+                Sky:Destroy()
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- CUSTOM HANDS
+----------------------------------------------------
+
+Hub.CreateSection(
+    VisualPage,
+    "HANDS"
+)
+
+Hub.CreateToggle(
+    VisualPage,
+    "Custom Hands",
+    "Enable custom hand offsets.",
+    "CustomHands",
+    function()
+        -- Applied in Part 6
+    end
+)
+
+Hub.CreateSlider(
+    VisualPage,
+    "Hand X",
+    "Horizontal hand offset.",
+    "HandX",
+    -5,
+    5,
+    0.1,
+    function()
+        -- Applied in Part 6
+    end
+)
+
+Hub.CreateSlider(
+    VisualPage,
+    "Hand Y",
+    "Vertical hand offset.",
+    "HandY",
+    -5,
+    5,
+    0.1,
+    function()
+        -- Applied in Part 6
+    end
+)
+
+Hub.CreateSlider(
+    VisualPage,
+    "Hand Z",
+    "Depth hand offset.",
+    "HandZ",
+    -5,
+    5,
+    0.1,
+    function()
+        -- Applied in Part 6
+    end
+)
+
+----------------------------------------------------
+-- COMBAT PAGE
+----------------------------------------------------
+
+Hub.CreateSection(
+    CombatPage,
+    "TARGETING"
+)
+
+Hub.CreateToggle(
+    CombatPage,
+    "Silent Aim",
+    "Enable target selection assistance.",
+    "SilentAim",
+    function()
+        -- Weapon integration in Part 6
+    end
+)
+
+Hub.CreateToggle(
+    CombatPage,
+    "Team Check",
+    "Ignore players on your team.",
+    "TeamCheck",
+    function()
+        UpdateESP()
+    end
+)
+
+Hub.CreateToggle(
+    CombatPage,
+    "Show FOV",
+    "Display the targeting field of view.",
+    "ShowFOV",
+    function(Value)
+
+        if Hub.FOVCircle then
+            Hub.FOVCircle.Visible =
+                Value
+        end
+
+    end
+)
+
+Hub.CreateToggle(
+    CombatPage,
+    "Snapline",
+    "Draw a line toward the selected target.",
+    "Snapline",
+    function()
+        -- Updated in Part 6
+    end
+)
+
+----------------------------------------------------
+-- FOV RADIUS
+----------------------------------------------------
+
+Hub.CreateSlider(
+    CombatPage,
+    "FOV Radius",
+    "Targeting field of view radius.",
+    "FOVRadius",
+    50,
+    500,
+    1,
+    function(Value)
+
+        if Hub.FOVCircle then
+
+            Hub.FOVCircle.Size =
+                UDim2.fromOffset(
+                    Value * 2,
+                    Value * 2
+                )
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- HIT PART
+----------------------------------------------------
+
+Hub.CreateDropdown(
+    CombatPage,
+    "Hit Part",
+    "Preferred target body part.",
+    "HitPart",
+    {
+        "Head",
+        "HumanoidRootPart",
+        "UpperTorso",
+        "LowerTorso",
+    },
+    function()
+        -- Used by combat integration
+    end
+)
+
+----------------------------------------------------
+-- BULLET TRACER
+----------------------------------------------------
+
+Hub.CreateSection(
+    CombatPage,
+    "BULLET TRACER"
+)
+
+Hub.CreateToggle(
+    CombatPage,
+    "Bullet Tracer",
+    "Display a tracer when supported by the weapon system.",
+    "BulletTracer",
+    function()
+        -- Weapon integration in Part 6
+    end
+)
+
+Hub.CreateSlider(
+    CombatPage,
+    "Lifetime",
+    "Tracer lifetime in seconds.",
+    "TracerLifetime",
+    0.1,
+    5,
+    0.1,
+    function()
+        -- Used by tracer system
+    end
+)
+
+Hub.CreateDropdown(
+    CombatPage,
+    "Type",
+    "Tracer rendering type.",
+    "TracerType",
+    {
+        "Laser",
+        "Beam",
+        "Line",
+    },
+    function()
+        -- Used by tracer system
+    end
+)
+
+Hub.CreateDropdown(
+    CombatPage,
+    "Color",
+    "Tracer color.",
+    "TracerColor",
+    {
+        "Purple",
+        "Red",
+        "Blue",
+        "Green",
+        "Pink",
+        "Orange",
+    },
+    function()
+        -- Used by tracer system
+    end
+)
+
+----------------------------------------------------
+-- FOV CIRCLE
+----------------------------------------------------
+
+local FOVCircle =
+    Instance.new("Frame")
+
+FOVCircle.Name =
+    "FOVCircle"
+
+FOVCircle.Size =
+    UDim2.fromOffset(
+        Settings.FOVRadius * 2,
+        Settings.FOVRadius * 2
+    )
+
+FOVCircle.AnchorPoint =
+    Vector2.new(0.5, 0.5)
+
+FOVCircle.Position =
+    UDim2.fromScale(
+        0.5,
+        0.5
+    )
+
+FOVCircle.BackgroundTransparency =
+    1
+
+FOVCircle.BorderSizePixel =
+    0
+
+FOVCircle.Visible =
+    Settings.ShowFOV
+
+FOVCircle.ZIndex =
+    10
+
+FOVCircle.Parent =
+    ScreenGui
+
+Hub.FOVCircle =
+    FOVCircle
+
+local FOVStroke =
+    Instance.new("UIStroke")
+
+FOVStroke.Color =
+    GetAccent()
+
+FOVStroke.Thickness =
+    1
+
+FOVStroke.Transparency =
+    0.15
+
+FOVStroke.Parent =
+    FOVCircle
+
+local FOVCorner =
+    Instance.new("UICorner")
+
+FOVCorner.CornerRadius =
+    UDim.new(1, 0)
+
+FOVCorner.Parent =
+    FOVCircle
+
+----------------------------------------------------
+-- UPDATE FOV POSITION
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.RenderStepped,
+    function()
+
+        if not Hub.FOVCircle then
+            return
+        end
+
+        Hub.FOVCircle.Visible =
+            Settings.ShowFOV
+
+        Hub.FOVCircle.Size =
+            UDim2.fromOffset(
+                Settings.FOVRadius * 2,
+                Settings.FOVRadius * 2
+            )
+
+        FOVStroke.Color =
+            GetAccent()
+
+    end
+)
+
+----------------------------------------------------
+-- PLAYER CONNECTIONS
+----------------------------------------------------
+
+Hub.Connect(
+    Players.PlayerAdded,
+    function(Target)
+
+        Hub.Connect(
+            Target.CharacterAdded,
+            function()
+
+                task.wait(0.5)
+
+                UpdateESP()
+
+            end
+        )
+
+    end
+)
+
+Hub.Connect(
+    Players.PlayerRemoving,
+    function(Target)
+
+        RemoveESP(Target)
+
+    end
+)
+
+Hub.Connect(
+    RunService.Heartbeat,
+    function()
+
+        if Settings.ESP then
+            UpdateESP()
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- INITIAL ESP
+----------------------------------------------------
+
+task.spawn(function()
+
+    task.wait(1)
+
+    UpdateESP()
+
 end)
 
---// START ANIMATION
-Main.BackgroundTransparency = 1
+print(
+    "Rusted v"
+    .. Hub.Version
+    .. " | Part 4/6 loaded"
+)
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 5/6
+            MOVEMENT / MISC FUNCTIONS
+====================================================
+]]
 
-TweenService:Create(
-    Main,
-    TweenInfo.new(
-        .25,
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.Out
-    ),
+----------------------------------------------------
+-- MOVEMENT PAGE
+----------------------------------------------------
+
+Hub.CreateSection(
+    MovementPage,
+    "MOVEMENT"
+)
+
+----------------------------------------------------
+-- SPEED HACK
+----------------------------------------------------
+
+Hub.CreateToggle(
+    MovementPage,
+    "Speed Hack",
+    "Change your character movement speed.",
+    "SpeedHack",
+    function(Value)
+
+        local Humanoid =
+            Hub.GetHumanoid()
+
+        if not Humanoid then
+            return
+        end
+
+        if Value then
+
+            Humanoid.WalkSpeed =
+                Settings.Speed
+
+        else
+
+            Humanoid.WalkSpeed =
+                16
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- SPEED VALUE
+----------------------------------------------------
+
+Hub.CreateSlider(
+    MovementPage,
+    "Speed Value",
+    "Movement speed in studs per second.",
+    "Speed",
+    16,
+    150,
+    1,
+    function(Value)
+
+        if Settings.SpeedHack then
+
+            local Humanoid =
+                Hub.GetHumanoid()
+
+            if Humanoid then
+
+                Humanoid.WalkSpeed =
+                    Value
+
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- NOCLIP
+----------------------------------------------------
+
+Hub.CreateToggle(
+    MovementPage,
+    "Noclip",
+    "Disable character collisions.",
+    "Noclip",
+    function()
+        -- Handled by Heartbeat below.
+    end
+)
+
+----------------------------------------------------
+-- JUMP
+----------------------------------------------------
+
+Hub.CreateToggle(
+    MovementPage,
+    "Jump",
+    "Enable custom jump power.",
+    "Jump",
+    function(Value)
+
+        local Humanoid =
+            Hub.GetHumanoid()
+
+        if not Humanoid then
+            return
+        end
+
+        pcall(function()
+            Humanoid.UseJumpPower = true
+        end)
+
+        if Value then
+
+            Humanoid.JumpPower =
+                Settings.JumpPower
+
+        else
+
+            Humanoid.JumpPower =
+                50
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- JUMP POWER
+----------------------------------------------------
+
+Hub.CreateSlider(
+    MovementPage,
+    "Jump Power",
+    "Character jump power.",
+    "JumpPower",
+    20,
+    150,
+    1,
+    function(Value)
+
+        if Settings.Jump then
+
+            local Humanoid =
+                Hub.GetHumanoid()
+
+            if Humanoid then
+
+                pcall(function()
+                    Humanoid.UseJumpPower = true
+                end)
+
+                Humanoid.JumpPower =
+                    Value
+
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- JUMP SHOT
+----------------------------------------------------
+
+Hub.CreateToggle(
+    MovementPage,
+    "Jump Shot",
+    "Keep jump behavior enabled while moving.",
+    "JumpShot",
+    function()
+        -- Applied by Heartbeat.
+    end
+)
+
+----------------------------------------------------
+-- MOVEMENT LOOP
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.Heartbeat,
+    function()
+
+        local Character =
+            Player.Character
+
+        local Humanoid =
+            Character
+            and Character:FindFirstChildOfClass(
+                "Humanoid"
+            )
+
+        if not Character or not Humanoid then
+            return
+        end
+
+        ------------------------------------------------
+        -- SPEED
+        ------------------------------------------------
+
+        if Settings.SpeedHack then
+
+            if Humanoid.WalkSpeed
+                ~= Settings.Speed then
+
+                Humanoid.WalkSpeed =
+                    Settings.Speed
+
+            end
+
+        end
+
+        ------------------------------------------------
+        -- JUMP
+        ------------------------------------------------
+
+        if Settings.Jump then
+
+            pcall(function()
+                Humanoid.UseJumpPower = true
+            end)
+
+            if Humanoid.JumpPower
+                ~= Settings.JumpPower then
+
+                Humanoid.JumpPower =
+                    Settings.JumpPower
+
+            end
+
+        end
+
+        ------------------------------------------------
+        -- NOCLIP
+        ------------------------------------------------
+
+        if Settings.Noclip then
+
+            for _, Object in ipairs(
+                Character:GetDescendants()
+            ) do
+
+                if Object:IsA("BasePart") then
+
+                    Object.CanCollide = false
+
+                end
+
+            end
+
+        end
+
+        ------------------------------------------------
+        -- JUMP SHOT
+        ------------------------------------------------
+
+        if Settings.JumpShot then
+
+            if Humanoid.FloorMaterial
+                ~= Enum.Material.Air then
+
+                if UserInputService:IsKeyDown(
+                    Enum.KeyCode.Space
+                ) then
+
+                    Humanoid.Jump = true
+
+                end
+
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- CHARACTER RESPAWN
+----------------------------------------------------
+
+Hub.Connect(
+    Player.CharacterAdded,
+    function(Character)
+
+        task.wait(0.5)
+
+        local Humanoid =
+            Character:FindFirstChildOfClass(
+                "Humanoid"
+            )
+
+        if not Humanoid then
+            return
+        end
+
+        if Settings.SpeedHack then
+
+            Humanoid.WalkSpeed =
+                Settings.Speed
+
+        end
+
+        if Settings.Jump then
+
+            pcall(function()
+                Humanoid.UseJumpPower = true
+            end)
+
+            Humanoid.JumpPower =
+                Settings.JumpPower
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- MISC PAGE
+----------------------------------------------------
+
+Hub.CreateSection(
+    MiscPage,
+    "LIGHTING"
+)
+
+----------------------------------------------------
+-- FULLBRIGHT
+----------------------------------------------------
+
+local OriginalLighting = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    FogEnd = Lighting.FogEnd,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+}
+
+Hub.CreateToggle(
+    MiscPage,
+    "Fullbright",
+    "Remove dark lighting effects.",
+    "Fullbright",
+    function(Value)
+
+        if Value then
+
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+
+            Lighting.Ambient =
+                Color3.fromRGB(
+                    255,
+                    255,
+                    255
+                )
+
+            Lighting.OutdoorAmbient =
+                Color3.fromRGB(
+                    255,
+                    255,
+                    255
+                )
+
+        else
+
+            Lighting.Brightness =
+                OriginalLighting.Brightness
+
+            Lighting.ClockTime =
+                OriginalLighting.ClockTime
+
+            Lighting.FogEnd =
+                OriginalLighting.FogEnd
+
+            Lighting.GlobalShadows =
+                OriginalLighting.GlobalShadows
+
+            Lighting.Ambient =
+                OriginalLighting.Ambient
+
+            Lighting.OutdoorAmbient =
+                OriginalLighting.OutdoorAmbient
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- NEON GUNS
+----------------------------------------------------
+
+Hub.CreateSection(
+    MiscPage,
+    "WEAPONS"
+)
+
+Hub.CreateToggle(
+    MiscPage,
+    "Neon Guns",
+    "Apply a neon visual effect to weapon parts.",
+    "NeonGuns",
+    function()
+        -- Applied by weapon scanner below.
+    end
+)
+
+----------------------------------------------------
+-- ORIGINAL MATERIAL STORAGE
+----------------------------------------------------
+
+local OriginalGunMaterials = {}
+
+local function IsLikelyWeapon(Object)
+
+    if not Object:IsA("Tool") then
+        return false
+    end
+
+    local Name =
+        string.lower(Object.Name)
+
+    return
+        string.find(Name, "gun")
+        or string.find(Name, "weapon")
+        or string.find(Name, "rifle")
+        or string.find(Name, "pistol")
+        or string.find(Name, "shotgun")
+        or string.find(Name, "sniper")
+end
+
+----------------------------------------------------
+-- APPLY NEON
+----------------------------------------------------
+
+local function UpdateNeonGuns()
+
+    local Character =
+        Player.Character
+
+    if not Character then
+        return
+    end
+
+    for _, Object in ipairs(
+        Character:GetChildren()
+    ) do
+
+        if IsLikelyWeapon(Object) then
+
+            for _, Part in ipairs(
+                Object:GetDescendants()
+            ) do
+
+                if Part:IsA("BasePart") then
+
+                    if not OriginalGunMaterials[Part] then
+
+                        OriginalGunMaterials[Part] =
+                            Part.Material
+
+                    end
+
+                    if Settings.NeonGuns then
+
+                        Part.Material =
+                            Enum.Material.Neon
+
+                    else
+
+                        Part.Material =
+                            OriginalGunMaterials[Part]
+
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+end
+
+----------------------------------------------------
+-- WEAPON SCAN
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.Heartbeat,
+    function()
+
+        if Settings.NeonGuns then
+            UpdateNeonGuns()
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- TOOL ADDED
+----------------------------------------------------
+
+Hub.Connect(
+    Player.CharacterAdded,
+    function(Character)
+
+        Character.ChildAdded:Connect(
+            function(Object)
+
+                if Settings.NeonGuns then
+
+                    task.wait()
+
+                    UpdateNeonGuns()
+
+                end
+
+            end
+        )
+
+    end
+)
+
+----------------------------------------------------
+-- MISC VISUAL UPDATE
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.RenderStepped,
+    function()
+
+        ------------------------------------------------
+        -- FULLBRIGHT
+        ------------------------------------------------
+
+        if Settings.Fullbright then
+
+            if Lighting.Brightness < 2 then
+                Lighting.Brightness = 2
+            end
+
+            if Lighting.GlobalShadows then
+                Lighting.GlobalShadows = false
+            end
+
+        end
+
+        ------------------------------------------------
+        -- SKYBOX
+        ------------------------------------------------
+
+        if Settings.Skybox then
+
+            local Sky =
+                Lighting:FindFirstChild(
+                    "RustedSky"
+                )
+
+            if Sky then
+                Sky.Parent = Lighting
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- MOVEMENT BUTTON REFRESH
+----------------------------------------------------
+
+local function RefreshMovement()
+
+    local Humanoid =
+        Hub.GetHumanoid()
+
+    if not Humanoid then
+        return
+    end
+
+    if Settings.SpeedHack then
+
+        Humanoid.WalkSpeed =
+            Settings.Speed
+
+    else
+
+        Humanoid.WalkSpeed = 16
+
+    end
+
+    if Settings.Jump then
+
+        pcall(function()
+            Humanoid.UseJumpPower = true
+        end)
+
+        Humanoid.JumpPower =
+            Settings.JumpPower
+
+    else
+
+        Humanoid.JumpPower = 50
+
+    end
+end
+
+----------------------------------------------------
+-- INITIAL MOVEMENT
+----------------------------------------------------
+
+task.spawn(function()
+
+    task.wait(1)
+
+    RefreshMovement()
+
+end)
+
+----------------------------------------------------
+-- READY
+----------------------------------------------------
+
+print(
+    "Rusted v"
+    .. Hub.Version
+    .. " | Part 5/6 loaded"
+)
+--[[
+====================================================
+                 RUSTED v3.0
+                    PART 6/6
+             SETTINGS / FINALIZER
+====================================================
+]]
+
+----------------------------------------------------
+-- SETTINGS PAGE
+----------------------------------------------------
+
+Hub.CreateSection(
+    SettingsPage,
+    "INTERFACE"
+)
+
+----------------------------------------------------
+-- MENU COLOR
+----------------------------------------------------
+
+Hub.CreateDropdown(
+    SettingsPage,
+    "Menu Color",
+    "Change the main Rusted accent color.",
+    "MenuColor",
     {
-        BackgroundTransparency = 0
-    }
-):Play()
+        "Purple",
+        "Red",
+        "Blue",
+        "Green",
+        "Pink",
+        "Orange",
+    },
+    function(Value)
 
-GUI.Enabled = true
-Main.Visible = true
+        Settings.MenuColor = Value
 
-print("================================")
-print("       RUSTED HUB v2.5")
-print("       ALL PARTS LOADED")
-print("       COMPACT UI READY")
-print("================================")
+        Hub.ApplyMenuColor()
+
+        Hub.RefreshControlColors()
+
+        ------------------------------------------------
+        -- PAGE BUTTON COLORS
+        ------------------------------------------------
+
+        for PageName, Data in pairs(
+            Hub.PageButtons
+        ) do
+
+            if PageName == Hub.CurrentPage then
+
+                Data.Icon.TextColor3 =
+                    Hub.GetMenuColor()
+
+            end
+
+        end
+
+        ------------------------------------------------
+        -- FOV
+        ------------------------------------------------
+
+        if Hub.FOVCircle then
+
+            local Stroke =
+                Hub.FOVCircle:FindFirstChildOfClass(
+                    "UIStroke"
+                )
+
+            if Stroke then
+                Stroke.Color =
+                    Hub.GetMenuColor()
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- AUTO UPDATE
+----------------------------------------------------
+
+Hub.CreateToggle(
+    SettingsPage,
+    "Auto Update",
+    "Automatically refresh Rusted systems.",
+    "AutoUpdate",
+    function()
+        -- Controlled by update loop.
+    end
+)
+
+----------------------------------------------------
+-- VERSION
+----------------------------------------------------
+
+local VersionSection =
+    Hub.CreateSection(
+        SettingsPage,
+        "ABOUT"
+    )
+
+local VersionPanel =
+    Hub.New(
+        "Frame",
+        {
+            Size =
+                UDim2.new(
+                    1,
+                    0,
+                    0,
+                    70
+                ),
+
+            BackgroundColor3 =
+                Theme.Row,
+
+            BorderSizePixel = 0,
+        },
+        SettingsPage
+    )
+
+Hub.Corner(
+    VersionPanel,
+    5
+)
+
+Hub.Stroke(
+    VersionPanel,
+    Theme.Border,
+    1,
+    0.55
+)
+
+local VersionTitle =
+    Hub.New(
+        "TextLabel",
+        {
+            Size =
+                UDim2.new(
+                    1,
+                    -24,
+                    0,
+                    22
+                ),
+
+            Position =
+                UDim2.fromOffset(
+                    12,
+                    8
+                ),
+
+            BackgroundTransparency = 1,
+
+            Text =
+                "RUSTED",
+
+            TextColor3 =
+                Theme.Text,
+
+            Font =
+                Enum.Font.GothamBlack,
+
+            TextSize = 13,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+        },
+        VersionPanel
+    )
+
+local VersionInfo =
+    Hub.New(
+        "TextLabel",
+        {
+            Size =
+                UDim2.new(
+                    1,
+                    -24,
+                    0,
+                    18
+                ),
+
+            Position =
+                UDim2.fromOffset(
+                    12,
+                    31
+                ),
+
+            BackgroundTransparency = 1,
+
+            Text =
+                "Version "
+                .. Hub.Version
+                .. "  •  Rusted Hub",
+
+            TextColor3 =
+                Theme.Text3,
+
+            Font =
+                Enum.Font.Gotham,
+
+            TextSize = 9,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+        },
+        VersionPanel
+    )
+
+local StatusText =
+    Hub.New(
+        "TextLabel",
+        {
+            Size =
+                UDim2.new(
+                    1,
+                    -24,
+                    0,
+                    16
+                ),
+
+            Position =
+                UDim2.fromOffset(
+                    12,
+                    49
+                ),
+
+            BackgroundTransparency = 1,
+
+            Text =
+                "Ready",
+
+            TextColor3 =
+                Theme.Green,
+
+            Font =
+                Enum.Font.GothamMedium,
+
+            TextSize = 8,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+        },
+        VersionPanel
+    )
+
+Hub.StatusText =
+    StatusText
+
+----------------------------------------------------
+-- MENU CONTROLS
+----------------------------------------------------
+
+local MenuSection =
+    Hub.CreateSection(
+        SettingsPage,
+        "MENU"
+    )
+
+----------------------------------------------------
+-- RESET POSITION BUTTON
+----------------------------------------------------
+
+local ResetButton =
+    Hub.New(
+        "TextButton",
+        {
+            Size =
+                UDim2.new(
+                    1,
+                    0,
+                    0,
+                    42
+                ),
+
+            BackgroundColor3 =
+                Theme.Row,
+
+            BorderSizePixel = 0,
+
+            AutoButtonColor = false,
+
+            Text =
+                "Reset Menu Position",
+
+            TextColor3 =
+                Theme.Text2,
+
+            Font =
+                Enum.Font.GothamMedium,
+
+            TextSize = 10,
+        },
+        SettingsPage
+    )
+
+Hub.Corner(
+    ResetButton,
+    5
+)
+
+Hub.Stroke(
+    ResetButton,
+    Theme.Border,
+    1,
+    0.55
+)
+
+ResetButton.MouseEnter:Connect(
+    function()
+
+        Hub.Tween(
+            ResetButton,
+            {
+                BackgroundColor3 =
+                    Theme.RowHover
+            },
+            0.1
+        )
+
+    end
+)
+
+ResetButton.MouseLeave:Connect(
+    function()
+
+        Hub.Tween(
+            ResetButton,
+            {
+                BackgroundColor3 =
+                    Theme.Row
+            },
+            0.1
+        )
+
+    end
+)
+
+----------------------------------------------------
+-- MENU DRAGGING
+----------------------------------------------------
+
+local Dragging =
+    false
+
+local DragStart =
+    nil
+
+local StartPosition =
+    nil
+
+local DragInput =
+    nil
+
+local function UpdateMainPosition(
+    Input
+)
+
+    if not Dragging then
+        return
+    end
+
+    if not Input then
+        return
+    end
+
+    local Delta =
+        Input.Position
+        - DragStart
+
+    Main.Position =
+        UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset
+                + Delta.X,
+
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset
+                + Delta.Y
+        )
+end
+
+----------------------------------------------------
+-- HEADER DRAG
+----------------------------------------------------
+
+Header.InputBegan:Connect(
+    function(Input)
+
+        if Input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            Input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            Dragging =
+                true
+
+            DragStart =
+                Input.Position
+
+            StartPosition =
+                Main.Position
+
+            if Input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                DragInput =
+                    Input
+
+            end
+
+        end
+
+    end
+)
+
+Header.InputChanged:Connect(
+    function(Input)
+
+        if Input.UserInputType ==
+            Enum.UserInputType.MouseMovement
+            or
+            Input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            DragInput =
+                Input
+
+        end
+
+    end
+)
+
+UserInputService.InputChanged:Connect(
+    function(Input)
+
+        if not Dragging then
+            return
+        end
+
+        if Input ==
+            DragInput then
+
+            UpdateMainPosition(
+                Input
+            )
+
+        end
+
+    end
+)
+
+UserInputService.InputEnded:Connect(
+    function(Input)
+
+        if Input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            Input.UserInputType ==
+            Enum.UserInputType.Touch then
+
+            Dragging =
+                false
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- RESET POSITION
+----------------------------------------------------
+
+local function ResetMenuPosition()
+
+    Main.Position =
+        UDim2.new(
+            0.5,
+            -380,
+            0.5,
+            -230
+        )
+
+end
+
+ResetButton.Activated:Connect(
+    function()
+
+        ResetMenuPosition()
+
+        StatusText.Text =
+            "Menu position reset."
+
+        StatusText.TextColor3 =
+            GetAccent()
+
+        task.delay(
+            2,
+            function()
+
+                if StatusText then
+
+                    StatusText.Text =
+                        "Ready"
+
+                    StatusText.TextColor3 =
+                        Theme.Green
+
+                end
+
+            end
+        )
+
+    end
+)
+
+----------------------------------------------------
+-- FLOATING BUTTON POSITION RESET
+----------------------------------------------------
+
+local FloatingResetButton =
+    Hub.New(
+        "TextButton",
+        {
+            Name =
+                "FloatingReset",
+
+            Size =
+                UDim2.fromOffset(
+                    20,
+                    20
+                ),
+
+            Position =
+                UDim2.new(
+                    1,
+                    -22,
+                    1,
+                    -22
+                ),
+
+            BackgroundTransparency =
+                1,
+
+            Text = "",
+
+            Visible = false,
+        },
+        ScreenGui
+    )
+
+----------------------------------------------------
+-- MENU COLOR REFRESH
+----------------------------------------------------
+
+local function RefreshAllColors()
+
+    local Accent =
+        Hub.GetMenuColor()
+
+    ------------------------------------------------
+    -- MAIN
+    ------------------------------------------------
+
+    if MainStroke then
+
+        MainStroke.Color =
+            Accent
+
+    end
+
+    ------------------------------------------------
+    -- LOGO
+    ------------------------------------------------
+
+    if LogoAccent then
+
+        LogoAccent.BackgroundColor3 =
+            Accent
+
+    end
+
+    ------------------------------------------------
+    -- SIDEBAR
+    ------------------------------------------------
+
+    for PageName, Data in pairs(
+        Hub.PageButtons
+    ) do
+
+        if PageName ==
+            Hub.CurrentPage then
+
+            Data.Accent.BackgroundColor3 =
+                Accent
+
+            Data.Icon.TextColor3 =
+                Accent
+
+        end
+
+    end
+
+    ------------------------------------------------
+    -- FOV
+    ------------------------------------------------
+
+    if Hub.FOVCircle then
+
+        local Stroke =
+            Hub.FOVCircle:FindFirstChildOfClass(
+                "UIStroke"
+            )
+
+        if Stroke then
+
+            Stroke.Color =
+                Accent
+
+        end
+
+    end
+
+    ------------------------------------------------
+    -- FLOATING
+    ------------------------------------------------
+
+    if FloatingButton then
+
+        FloatingButton.TextColor3 =
+            Accent
+
+    end
+
+    if FloatingStroke then
+
+        FloatingStroke.Color =
+            Accent
+
+    end
+
+    if FloatingAccent then
+
+        FloatingAccent.BackgroundColor3 =
+            Accent
+
+    end
+
+end
+
+----------------------------------------------------
+-- UPDATE MENU COLOR LOOP
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.RenderStepped,
+    function()
+
+        if Settings.AutoUpdate then
+
+            RefreshAllColors()
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- CAMERA FOV SAFETY
+----------------------------------------------------
+
+Hub.Connect(
+    RunService.RenderStepped,
+    function()
+
+        if not Settings.FOVChanger then
+            return
+        end
+
+        local Camera =
+            workspace.CurrentCamera
+
+        if not Camera then
+            return
+        end
+
+        if math.abs(
+            Camera.FieldOfView
+            - Settings.FOV
+        ) > 0.1 then
+
+            Camera.FieldOfView =
+                Settings.FOV
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- TEAM CHECK UPDATE
+----------------------------------------------------
+
+Hub.Connect(
+    Players.PlayerAdded,
+    function(Target)
+
+        Target:GetPropertyChangedSignal(
+            "Team"
+        ):Connect(
+            function()
+
+                if Settings.ESP then
+
+                    task.defer(
+                        function()
+
+                            if typeof(
+                                UpdateESP
+                            ) == "function" then
+
+                                UpdateESP()
+
+                            end
+
+                        end
+                    )
+
+                end
+
+            end
+        )
+
+    end
+)
+
+Hub.Connect(
+    RunService.Heartbeat,
+    function()
+
+        if Settings.AutoUpdate then
+
+            if Settings.ESP then
+
+                if typeof(
+                    UpdateESP
+                ) == "function" then
+
+                    UpdateESP()
+
+                end
+
+            end
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- CHARACTER RESET HANDLER
+----------------------------------------------------
+
+Hub.Connect(
+    Player.CharacterAdded,
+    function()
+
+        task.wait(0.75)
+
+        if Settings.SpeedHack then
+
+            local Humanoid =
+                Hub.GetHumanoid()
+
+            if Humanoid then
+
+                Humanoid.WalkSpeed =
+                    Settings.Speed
+
+            end
+
+        end
+
+        if Settings.Jump then
+
+            local Humanoid =
+                Hub.GetHumanoid()
+
+            if Humanoid then
+
+                pcall(
+                    function()
+
+                        Humanoid.UseJumpPower =
+                            true
+
+                    end
+                )
+
+                Humanoid.JumpPower =
+                    Settings.JumpPower
+
+            end
+
+        end
+
+        if Settings.Fullbright then
+
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+
+            Lighting.Ambient =
+                Color3.fromRGB(
+                    255,
+                    255,
+                    255
+                )
+
+            Lighting.OutdoorAmbient =
+                Color3.fromRGB(
+                    255,
+                    255,
+                    255
+                )
+
+        end
+
+    end
+)
+
+----------------------------------------------------
+-- SETTINGS DEFAULTS
+----------------------------------------------------
+
+Settings.MenuColor =
+    Settings.MenuColor
+    or "Purple"
+
+Settings.AutoUpdate =
+    Settings.AutoUpdate ~= false
+
+----------------------------------------------------
+-- FINAL COLOR APPLY
+----------------------------------------------------
+
+Hub.ApplyMenuColor()
+
+Hub.RefreshControlColors()
+
+RefreshAllColors()
+
+----------------------------------------------------
+-- FINAL PAGE
+----------------------------------------------------
+
+Hub.SwitchPage(
+    Hub.CurrentPage
+    or "Visual"
+)
+
+----------------------------------------------------
+-- MAIN MENU VISIBLE
+----------------------------------------------------
+
+Main.Visible =
+    true
+
+FloatingButton.Visible =
+    false
+
+Settings.MenuOpen =
+    true
+
+----------------------------------------------------
+-- FINAL STATUS
+----------------------------------------------------
+
+if StatusText then
+
+    StatusText.Text =
+        "Rusted v"
+        .. Hub.Version
+        .. " loaded."
+
+    StatusText.TextColor3 =
+        GetAccent()
+
+end
+
+----------------------------------------------------
+-- LOADING EFFECT
+----------------------------------------------------
+
+Main.BackgroundTransparency =
+    1
+
+task.spawn(
+    function()
+
+        task.wait()
+
+        Hub.Tween(
+            Main,
+            {
+                BackgroundTransparency =
+                    0
+            },
+            0.25
+        )
+
+    end
+)
+
+----------------------------------------------------
+-- FINAL PRINT
+----------------------------------------------------
+
+print(
+    "========================================"
+)
+
+print(
+    "        RUSTED v"
+        .. Hub.Version
+        .. " READY"
+)
+
+print(
+    "        PART 1/6 - OK"
+)
+
+print(
+    "        PART 2/6 - OK"
+)
+
+print(
+    "        PART 3/6 - OK"
+)
+
+print(
+    "        PART 4/6 - OK"
+)
+
+print(
+    "        PART 5/6 - OK"
+)
+
+print(
+    "        PART 6/6 - OK"
+)
+
+print(
+    "========================================"
+)
